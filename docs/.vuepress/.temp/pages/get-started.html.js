@@ -1,5 +1,5 @@
-import comp from "/Users/lizhenbin/code/logbook/docs/.vuepress/.temp/pages/get-started.html.vue"
-const data = JSON.parse("{\"path\":\"/get-started.html\",\"title\":\"Get Started\",\"lang\":\"zh-CN\",\"frontmatter\":{},\"headers\":[{\"level\":2,\"title\":\"Pages\",\"slug\":\"pages\",\"link\":\"#pages\",\"children\":[]},{\"level\":2,\"title\":\"Content\",\"slug\":\"content\",\"link\":\"#content\",\"children\":[]},{\"level\":2,\"title\":\"Configuration\",\"slug\":\"configuration\",\"link\":\"#configuration\",\"children\":[]},{\"level\":2,\"title\":\"Layouts and customization\",\"slug\":\"layouts-and-customization\",\"link\":\"#layouts-and-customization\",\"children\":[]}],\"git\":{},\"filePathRelative\":\"get-started.md\"}")
+import comp from "/Users/ben/practice/logbook/docs/.vuepress/.temp/pages/get-started.html.vue"
+const data = JSON.parse("{\"path\":\"/get-started.html\",\"title\":\"Get Started\",\"lang\":\"zh-CN\",\"frontmatter\":{},\"git\":{\"updatedTime\":1742617282000,\"contributors\":[{\"name\":\"loopbin\",\"username\":\"loopbin\",\"email\":\"lizhenbin@bins-MacBook-Pro.local\",\"commits\":1,\"url\":\"https://github.com/loopbin\"}],\"changelog\":[{\"hash\":\"14a4d33db93c977d9a10ca8875e22cd6e16f0496\",\"time\":1742617282000,\"email\":\"lizhenbin@bins-MacBook-Pro.local\",\"author\":\"loopbin\",\"message\":\"init\"}]},\"filePathRelative\":\"get-started.md\"}")
 export { comp, data }
 
 if (import.meta.webpackHot) {

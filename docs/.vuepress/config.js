@@ -1,17 +1,32 @@
-import { defaultTheme } from '@vuepress/theme-default'
-import { defineUserConfig } from 'vuepress/cli'
-import { webpackBundler } from '@vuepress/bundler-webpack'
+import { defaultTheme } from "@vuepress/theme-default";
+import { defineUserConfig } from "vuepress/cli";
+import { webpackBundler } from "@vuepress/bundler-webpack";
 
 export default defineUserConfig({
-  lang: 'zh-CN',
-  title: '你好， VuePress ！',
-  description: '这是我的第一个 VuePress 站点',
-  base: 'logbook',
+  lang: "zh-CN",
+  title: "开发日记",
+  description: "个人开发日记和技术笔记",
+  base: "/",
   theme: defaultTheme({
-    logo: 'https://vuejs.press/images/hero.png',
-
-    navbar: ['/', '/get-started'],
+    logo: "https://vuejs.press/images/hero.png",
+    navbar: [
+      { text: "首页", link: "/" },
+      { text: "指南", link: "/get-started" },
+      { text: "WebRTC", link: "/webrtc" },
+      { text: "Docker", link: "/docker/" },
+    ],
+    sidebar: {
+      "/docker/": [
+        {
+          text: "Docker 教程",
+          children: ["/docker/README.md"],
+        },
+      ],
+    },
   }),
-
-  bundler: webpackBundler(),
-})
+  bundler: webpackBundler({
+    devServer: {
+      port: 8089,
+    },
+  }),
+});
