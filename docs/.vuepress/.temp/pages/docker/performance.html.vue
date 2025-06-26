@@ -1,0 +1,353 @@
+<template><div><h1 id="docker-性能优化" tabindex="-1"><a class="header-anchor" href="#docker-性能优化"><span>Docker 性能优化</span></a></h1>
+<h2 id="镜像优化" tabindex="-1"><a class="header-anchor" href="#镜像优化"><span>镜像优化</span></a></h2>
+<h3 id="_1-多阶段构建" tabindex="-1"><a class="header-anchor" href="#_1-多阶段构建"><span>1. 多阶段构建</span></a></h3>
+<div class="language-docker line-numbers-mode" data-highlighter="prismjs" data-ext="docker"><pre v-pre><code class="language-docker"><span class="line"><span class="token comment"># 构建阶段</span></span>
+<span class="line"><span class="token instruction"><span class="token keyword">FROM</span> node:14-alpine <span class="token keyword">AS</span> builder</span></span>
+<span class="line"><span class="token instruction"><span class="token keyword">WORKDIR</span> /app</span></span>
+<span class="line"><span class="token instruction"><span class="token keyword">COPY</span> package*.json ./</span></span>
+<span class="line"><span class="token instruction"><span class="token keyword">RUN</span> npm ci</span></span>
+<span class="line"><span class="token instruction"><span class="token keyword">COPY</span> . .</span></span>
+<span class="line"><span class="token instruction"><span class="token keyword">RUN</span> npm run build</span></span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 生产阶段</span></span>
+<span class="line"><span class="token instruction"><span class="token keyword">FROM</span> nginx:alpine</span></span>
+<span class="line"><span class="token instruction"><span class="token keyword">COPY</span> <span class="token options"><span class="token property">--from</span><span class="token punctuation">=</span><span class="token string">builder</span></span> /app/dist /usr/share/nginx/html</span></span>
+<span class="line"><span class="token instruction"><span class="token keyword">COPY</span> nginx.conf /etc/nginx/conf.d/default.conf</span></span>
+<span class="line"></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_2-层优化" tabindex="-1"><a class="header-anchor" href="#_2-层优化"><span>2. 层优化</span></a></h3>
+<div class="language-docker line-numbers-mode" data-highlighter="prismjs" data-ext="docker"><pre v-pre><code class="language-docker"><span class="line"><span class="token comment"># 不推荐</span></span>
+<span class="line"><span class="token instruction"><span class="token keyword">FROM</span> ubuntu</span></span>
+<span class="line"><span class="token instruction"><span class="token keyword">RUN</span> apt-get update</span></span>
+<span class="line"><span class="token instruction"><span class="token keyword">RUN</span> apt-get install -y nginx</span></span>
+<span class="line"><span class="token instruction"><span class="token keyword">RUN</span> apt-get install -y php</span></span>
+<span class="line"><span class="token instruction"><span class="token keyword">RUN</span> apt-get install -y mysql</span></span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 推荐</span></span>
+<span class="line"><span class="token instruction"><span class="token keyword">FROM</span> ubuntu</span></span>
+<span class="line"><span class="token instruction"><span class="token keyword">RUN</span> apt-get update &amp;&amp; <span class="token operator">\</span></span>
+<span class="line">    apt-get install -y <span class="token operator">\</span></span>
+<span class="line">    nginx <span class="token operator">\</span></span>
+<span class="line">    php <span class="token operator">\</span></span>
+<span class="line">    mysql &amp;&amp; <span class="token operator">\</span></span>
+<span class="line">    apt-get clean &amp;&amp; <span class="token operator">\</span></span>
+<span class="line">    rm -rf /var/lib/apt/lists/*</span></span>
+<span class="line"></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_3-基础镜像选择" tabindex="-1"><a class="header-anchor" href="#_3-基础镜像选择"><span>3. 基础镜像选择</span></a></h3>
+<div class="language-docker line-numbers-mode" data-highlighter="prismjs" data-ext="docker"><pre v-pre><code class="language-docker"><span class="line"><span class="token comment"># 不推荐：使用完整镜像</span></span>
+<span class="line"><span class="token instruction"><span class="token keyword">FROM</span> ubuntu:latest</span></span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 推荐：使用精简镜像</span></span>
+<span class="line"><span class="token instruction"><span class="token keyword">FROM</span> alpine:latest</span></span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 推荐：使用官方优化镜像</span></span>
+<span class="line"><span class="token instruction"><span class="token keyword">FROM</span> node:14-alpine</span></span>
+<span class="line"></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="容器优化" tabindex="-1"><a class="header-anchor" href="#容器优化"><span>容器优化</span></a></h2>
+<h3 id="_1-资源限制" tabindex="-1"><a class="header-anchor" href="#_1-资源限制"><span>1. 资源限制</span></a></h3>
+<div class="language-bash line-numbers-mode" data-highlighter="prismjs" data-ext="sh"><pre v-pre><code class="language-bash"><span class="line"><span class="token comment"># CPU 限制</span></span>
+<span class="line"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token parameter variable">--name</span> web <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">--cpus</span><span class="token operator">=</span><span class="token number">0.5</span> <span class="token punctuation">\</span></span>
+<span class="line">  --cpu-shares<span class="token operator">=</span><span class="token number">512</span> <span class="token punctuation">\</span></span>
+<span class="line">  nginx</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 内存限制</span></span>
+<span class="line"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token parameter variable">--name</span> web <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">--memory</span><span class="token operator">=</span>512m <span class="token punctuation">\</span></span>
+<span class="line">  --memory-swap<span class="token operator">=</span>1g <span class="token punctuation">\</span></span>
+<span class="line">  --memory-reservation<span class="token operator">=</span>256m <span class="token punctuation">\</span></span>
+<span class="line">  nginx</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 进程数限制</span></span>
+<span class="line"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token parameter variable">--name</span> web <span class="token punctuation">\</span></span>
+<span class="line">  --pids-limit<span class="token operator">=</span><span class="token number">100</span> <span class="token punctuation">\</span></span>
+<span class="line">  nginx</span>
+<span class="line"></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_2-存储优化" tabindex="-1"><a class="header-anchor" href="#_2-存储优化"><span>2. 存储优化</span></a></h3>
+<div class="language-bash line-numbers-mode" data-highlighter="prismjs" data-ext="sh"><pre v-pre><code class="language-bash"><span class="line"><span class="token comment"># 使用 tmpfs</span></span>
+<span class="line"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token parameter variable">--name</span> web <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">--tmpfs</span> /tmp:rw,noexec,nosuid,size<span class="token operator">=</span>100m <span class="token punctuation">\</span></span>
+<span class="line">  nginx</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 使用只读文件系统</span></span>
+<span class="line"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token parameter variable">--name</span> web <span class="token punctuation">\</span></span>
+<span class="line">  --read-only <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">-v</span> /app/data:/app/data:rw <span class="token punctuation">\</span></span>
+<span class="line">  nginx</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 使用数据卷</span></span>
+<span class="line"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token parameter variable">--name</span> web <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">-v</span> web-data:/app/data <span class="token punctuation">\</span></span>
+<span class="line">  nginx</span>
+<span class="line"></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_3-网络优化" tabindex="-1"><a class="header-anchor" href="#_3-网络优化"><span>3. 网络优化</span></a></h3>
+<div class="language-bash line-numbers-mode" data-highlighter="prismjs" data-ext="sh"><pre v-pre><code class="language-bash"><span class="line"><span class="token comment"># 使用 host 网络</span></span>
+<span class="line"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token parameter variable">--name</span> web <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">--network</span> <span class="token function">host</span> <span class="token punctuation">\</span></span>
+<span class="line">  nginx</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 使用自定义网络</span></span>
+<span class="line"><span class="token function">docker</span> network create <span class="token parameter variable">--driver</span> bridge <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">--opt</span> <span class="token assign-left variable">com.docker.network.bridge.name</span><span class="token operator">=</span>mybridge <span class="token punctuation">\</span></span>
+<span class="line">  my-network</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 使用 DNS 配置</span></span>
+<span class="line"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token parameter variable">--name</span> web <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">--dns</span> <span class="token number">8.8</span>.8.8 <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">--dns</span> <span class="token number">8.8</span>.4.4 <span class="token punctuation">\</span></span>
+<span class="line">  nginx</span>
+<span class="line"></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="应用优化" tabindex="-1"><a class="header-anchor" href="#应用优化"><span>应用优化</span></a></h2>
+<h3 id="_1-进程管理" tabindex="-1"><a class="header-anchor" href="#_1-进程管理"><span>1. 进程管理</span></a></h3>
+<div class="language-bash line-numbers-mode" data-highlighter="prismjs" data-ext="sh"><pre v-pre><code class="language-bash"><span class="line"><span class="token comment"># 使用 init 系统</span></span>
+<span class="line"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token parameter variable">--name</span> web <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">--init</span> <span class="token punctuation">\</span></span>
+<span class="line">  nginx</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 设置健康检查</span></span>
+<span class="line"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token parameter variable">--name</span> web <span class="token punctuation">\</span></span>
+<span class="line">  --health-cmd<span class="token operator">=</span><span class="token string">"curl -f http://localhost/health || exit 1"</span> <span class="token punctuation">\</span></span>
+<span class="line">  --health-interval<span class="token operator">=</span>30s <span class="token punctuation">\</span></span>
+<span class="line">  --health-timeout<span class="token operator">=</span>3s <span class="token punctuation">\</span></span>
+<span class="line">  --health-retries<span class="token operator">=</span><span class="token number">3</span> <span class="token punctuation">\</span></span>
+<span class="line">  nginx</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 设置重启策略</span></span>
+<span class="line"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token parameter variable">--name</span> web <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">--restart</span><span class="token operator">=</span>unless-stopped <span class="token punctuation">\</span></span>
+<span class="line">  nginx</span>
+<span class="line"></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_2-日志管理" tabindex="-1"><a class="header-anchor" href="#_2-日志管理"><span>2. 日志管理</span></a></h3>
+<div class="language-bash line-numbers-mode" data-highlighter="prismjs" data-ext="sh"><pre v-pre><code class="language-bash"><span class="line"><span class="token comment"># 使用日志驱动</span></span>
+<span class="line"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token parameter variable">--name</span> web <span class="token punctuation">\</span></span>
+<span class="line">  --log-driver<span class="token operator">=</span>json-file <span class="token punctuation">\</span></span>
+<span class="line">  --log-opt max-size<span class="token operator">=</span>10m <span class="token punctuation">\</span></span>
+<span class="line">  --log-opt max-file<span class="token operator">=</span><span class="token number">3</span> <span class="token punctuation">\</span></span>
+<span class="line">  nginx</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 使用 syslog</span></span>
+<span class="line"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token parameter variable">--name</span> web <span class="token punctuation">\</span></span>
+<span class="line">  --log-driver<span class="token operator">=</span>syslog <span class="token punctuation">\</span></span>
+<span class="line">  --log-opt syslog-address<span class="token operator">=</span>udp://localhost:514 <span class="token punctuation">\</span></span>
+<span class="line">  nginx</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 使用日志轮转</span></span>
+<span class="line"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token parameter variable">--name</span> web <span class="token punctuation">\</span></span>
+<span class="line">  --log-driver<span class="token operator">=</span>json-file <span class="token punctuation">\</span></span>
+<span class="line">  --log-opt max-size<span class="token operator">=</span>10m <span class="token punctuation">\</span></span>
+<span class="line">  --log-opt max-file<span class="token operator">=</span><span class="token number">3</span> <span class="token punctuation">\</span></span>
+<span class="line">  --log-opt <span class="token assign-left variable">compress</span><span class="token operator">=</span>true <span class="token punctuation">\</span></span>
+<span class="line">  nginx</span>
+<span class="line"></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_3-缓存优化" tabindex="-1"><a class="header-anchor" href="#_3-缓存优化"><span>3. 缓存优化</span></a></h3>
+<div class="language-bash line-numbers-mode" data-highlighter="prismjs" data-ext="sh"><pre v-pre><code class="language-bash"><span class="line"><span class="token comment"># 使用构建缓存</span></span>
+<span class="line"><span class="token function">docker</span> build --build-arg <span class="token assign-left variable">BUILDKIT_INLINE_CACHE</span><span class="token operator">=</span><span class="token number">1</span> <span class="token parameter variable">-t</span> myapp <span class="token builtin class-name">.</span></span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 使用镜像缓存</span></span>
+<span class="line"><span class="token function">docker</span> pull myapp:latest</span>
+<span class="line"><span class="token function">docker</span> build --cache-from myapp:latest <span class="token parameter variable">-t</span> myapp:new <span class="token builtin class-name">.</span></span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 使用数据卷缓存</span></span>
+<span class="line"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token parameter variable">--name</span> web <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">-v</span> web-cache:/app/cache <span class="token punctuation">\</span></span>
+<span class="line">  nginx</span>
+<span class="line"></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="系统优化" tabindex="-1"><a class="header-anchor" href="#系统优化"><span>系统优化</span></a></h2>
+<h3 id="_1-docker-守护进程" tabindex="-1"><a class="header-anchor" href="#_1-docker-守护进程"><span>1. Docker 守护进程</span></a></h3>
+<div class="language-bash line-numbers-mode" data-highlighter="prismjs" data-ext="sh"><pre v-pre><code class="language-bash"><span class="line"><span class="token comment"># 配置守护进程</span></span>
+<span class="line"><span class="token function">cat</span> <span class="token operator">></span> /etc/docker/daemon.json <span class="token operator">&lt;&lt;</span> <span class="token string">EOF</span>
+<span class="line">{</span>
+<span class="line">  "storage-driver": "overlay2",</span>
+<span class="line">  "log-driver": "json-file",</span>
+<span class="line">  "log-opts": {</span>
+<span class="line">    "max-size": "10m",</span>
+<span class="line">    "max-file": "3"</span>
+<span class="line">  },</span>
+<span class="line">  "default-ulimits": {</span>
+<span class="line">    "nofile": {</span>
+<span class="line">      "Name": "nofile",</span>
+<span class="line">      "Hard": 64000,</span>
+<span class="line">      "Soft": 64000</span>
+<span class="line">    }</span>
+<span class="line">  }</span>
+<span class="line">}</span>
+<span class="line">EOF</span></span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 重启守护进程</span></span>
+<span class="line"><span class="token function">sudo</span> systemctl restart <span class="token function">docker</span></span>
+<span class="line"></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_2-系统配置" tabindex="-1"><a class="header-anchor" href="#_2-系统配置"><span>2. 系统配置</span></a></h3>
+<div class="language-bash line-numbers-mode" data-highlighter="prismjs" data-ext="sh"><pre v-pre><code class="language-bash"><span class="line"><span class="token comment"># 调整系统限制</span></span>
+<span class="line"><span class="token function">cat</span> <span class="token operator">></span> /etc/sysctl.d/99-docker.conf <span class="token operator">&lt;&lt;</span> <span class="token string">EOF</span>
+<span class="line">net.ipv4.ip_forward=1</span>
+<span class="line">net.bridge.bridge-nf-call-iptables=1</span>
+<span class="line">net.bridge.bridge-nf-call-ip6tables=1</span>
+<span class="line">vm.swappiness=0</span>
+<span class="line">vm.max_map_count=262144</span>
+<span class="line">EOF</span></span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 应用配置</span></span>
+<span class="line"><span class="token function">sudo</span> <span class="token function">sysctl</span> <span class="token parameter variable">--system</span></span>
+<span class="line"></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_3-存储驱动" tabindex="-1"><a class="header-anchor" href="#_3-存储驱动"><span>3. 存储驱动</span></a></h3>
+<div class="language-bash line-numbers-mode" data-highlighter="prismjs" data-ext="sh"><pre v-pre><code class="language-bash"><span class="line"><span class="token comment"># 检查存储驱动</span></span>
+<span class="line"><span class="token function">docker</span> info <span class="token operator">|</span> <span class="token function">grep</span> <span class="token string">"Storage Driver"</span></span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 配置 overlay2</span></span>
+<span class="line"><span class="token function">cat</span> <span class="token operator">></span> /etc/docker/daemon.json <span class="token operator">&lt;&lt;</span> <span class="token string">EOF</span>
+<span class="line">{</span>
+<span class="line">  "storage-driver": "overlay2",</span>
+<span class="line">  "storage-opts": [</span>
+<span class="line">    "overlay2.size=10G"</span>
+<span class="line">  ]</span>
+<span class="line">}</span>
+<span class="line">EOF</span></span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 重启 Docker</span></span>
+<span class="line"><span class="token function">sudo</span> systemctl restart <span class="token function">docker</span></span>
+<span class="line"></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="监控优化" tabindex="-1"><a class="header-anchor" href="#监控优化"><span>监控优化</span></a></h2>
+<h3 id="_1-资源监控" tabindex="-1"><a class="header-anchor" href="#_1-资源监控"><span>1. 资源监控</span></a></h3>
+<div class="language-bash line-numbers-mode" data-highlighter="prismjs" data-ext="sh"><pre v-pre><code class="language-bash"><span class="line"><span class="token comment"># 使用 cAdvisor</span></span>
+<span class="line"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">--name</span><span class="token operator">=</span>cadvisor <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">-p</span> <span class="token number">8080</span>:8080 <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">-v</span> /:/rootfs:ro <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">-v</span> /var/run:/var/run:ro <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">-v</span> /sys:/sys:ro <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">-v</span> /var/lib/docker/:/var/lib/docker:ro <span class="token punctuation">\</span></span>
+<span class="line">  gcr.io/cadvisor/cadvisor</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 使用 Prometheus</span></span>
+<span class="line"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">--name</span><span class="token operator">=</span>prometheus <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">-p</span> <span class="token number">9090</span>:9090 <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">-v</span> /path/to/prometheus.yml:/etc/prometheus/prometheus.yml <span class="token punctuation">\</span></span>
+<span class="line">  prom/prometheus</span>
+<span class="line"></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_2-日志监控" tabindex="-1"><a class="header-anchor" href="#_2-日志监控"><span>2. 日志监控</span></a></h3>
+<div class="language-bash line-numbers-mode" data-highlighter="prismjs" data-ext="sh"><pre v-pre><code class="language-bash"><span class="line"><span class="token comment"># 使用 ELK Stack</span></span>
+<span class="line"><span class="token function">docker-compose</span> up <span class="token parameter variable">-d</span> elasticsearch logstash kibana</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 使用 Fluentd</span></span>
+<span class="line"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">--name</span><span class="token operator">=</span>fluentd <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">-v</span> /var/log:/var/log <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">-v</span> /var/lib/docker/containers:/var/lib/docker/containers <span class="token punctuation">\</span></span>
+<span class="line">  fluent/fluentd</span>
+<span class="line"></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_3-性能分析" tabindex="-1"><a class="header-anchor" href="#_3-性能分析"><span>3. 性能分析</span></a></h3>
+<div class="language-bash line-numbers-mode" data-highlighter="prismjs" data-ext="sh"><pre v-pre><code class="language-bash"><span class="line"><span class="token comment"># 使用 Docker Stats</span></span>
+<span class="line"><span class="token function">docker</span> stats</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 使用 Docker Top</span></span>
+<span class="line"><span class="token function">docker</span> <span class="token function">top</span> container_name</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 使用 Docker Events</span></span>
+<span class="line"><span class="token function">docker</span> events</span>
+<span class="line"></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="最佳实践" tabindex="-1"><a class="header-anchor" href="#最佳实践"><span>最佳实践</span></a></h2>
+<h3 id="_1-镜像构建" tabindex="-1"><a class="header-anchor" href="#_1-镜像构建"><span>1. 镜像构建</span></a></h3>
+<div class="language-docker line-numbers-mode" data-highlighter="prismjs" data-ext="docker"><pre v-pre><code class="language-docker"><span class="line"><span class="token comment"># 使用 .dockerignore</span></span>
+<span class="line">node_modules</span>
+<span class="line">npm-debug.log</span>
+<span class="line">.git</span>
+<span class="line">.gitignore</span>
+<span class="line">README.md</span>
+<span class="line">.env</span>
+<span class="line">*.md</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 使用多阶段构建</span></span>
+<span class="line"><span class="token instruction"><span class="token keyword">FROM</span> node:14-alpine <span class="token keyword">AS</span> builder</span></span>
+<span class="line"><span class="token instruction"><span class="token keyword">WORKDIR</span> /app</span></span>
+<span class="line"><span class="token instruction"><span class="token keyword">COPY</span> package*.json ./</span></span>
+<span class="line"><span class="token instruction"><span class="token keyword">RUN</span> npm ci</span></span>
+<span class="line"><span class="token instruction"><span class="token keyword">COPY</span> . .</span></span>
+<span class="line"><span class="token instruction"><span class="token keyword">RUN</span> npm run build</span></span>
+<span class="line"></span>
+<span class="line"><span class="token instruction"><span class="token keyword">FROM</span> nginx:alpine</span></span>
+<span class="line"><span class="token instruction"><span class="token keyword">COPY</span> <span class="token options"><span class="token property">--from</span><span class="token punctuation">=</span><span class="token string">builder</span></span> /app/dist /usr/share/nginx/html</span></span>
+<span class="line"></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_2-容器运行" tabindex="-1"><a class="header-anchor" href="#_2-容器运行"><span>2. 容器运行</span></a></h3>
+<div class="language-bash line-numbers-mode" data-highlighter="prismjs" data-ext="sh"><pre v-pre><code class="language-bash"><span class="line"><span class="token comment"># 使用资源限制</span></span>
+<span class="line"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token parameter variable">--name</span> web <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">--cpus</span><span class="token operator">=</span><span class="token number">0.5</span> <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">--memory</span><span class="token operator">=</span>512m <span class="token punctuation">\</span></span>
+<span class="line">  --pids-limit<span class="token operator">=</span><span class="token number">100</span> <span class="token punctuation">\</span></span>
+<span class="line">  nginx</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 使用健康检查</span></span>
+<span class="line"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token parameter variable">--name</span> web <span class="token punctuation">\</span></span>
+<span class="line">  --health-cmd<span class="token operator">=</span><span class="token string">"curl -f http://localhost/health || exit 1"</span> <span class="token punctuation">\</span></span>
+<span class="line">  --health-interval<span class="token operator">=</span>30s <span class="token punctuation">\</span></span>
+<span class="line">  nginx</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 使用日志管理</span></span>
+<span class="line"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token parameter variable">--name</span> web <span class="token punctuation">\</span></span>
+<span class="line">  --log-driver<span class="token operator">=</span>json-file <span class="token punctuation">\</span></span>
+<span class="line">  --log-opt max-size<span class="token operator">=</span>10m <span class="token punctuation">\</span></span>
+<span class="line">  nginx</span>
+<span class="line"></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_3-系统维护" tabindex="-1"><a class="header-anchor" href="#_3-系统维护"><span>3. 系统维护</span></a></h3>
+<div class="language-bash line-numbers-mode" data-highlighter="prismjs" data-ext="sh"><pre v-pre><code class="language-bash"><span class="line"><span class="token comment"># 定期清理</span></span>
+<span class="line"><span class="token function">docker</span> system prune <span class="token parameter variable">-a</span></span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 更新镜像</span></span>
+<span class="line"><span class="token function">docker</span> pull nginx:latest</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 检查系统状态</span></span>
+<span class="line"><span class="token function">docker</span> system <span class="token function">df</span></span>
+<span class="line"><span class="token function">docker</span> system info</span>
+<span class="line"></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="常见问题" tabindex="-1"><a class="header-anchor" href="#常见问题"><span>常见问题</span></a></h2>
+<h3 id="_1-性能瓶颈" tabindex="-1"><a class="header-anchor" href="#_1-性能瓶颈"><span>1. 性能瓶颈</span></a></h3>
+<div class="language-bash line-numbers-mode" data-highlighter="prismjs" data-ext="sh"><pre v-pre><code class="language-bash"><span class="line"><span class="token comment"># 检查 CPU 使用</span></span>
+<span class="line"><span class="token function">docker</span> stats container_name</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 检查内存使用</span></span>
+<span class="line"><span class="token function">docker</span> stats container_name</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 检查磁盘 I/O</span></span>
+<span class="line"><span class="token function">docker</span> <span class="token builtin class-name">exec</span> container_name iostat</span>
+<span class="line"></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_2-资源竞争" tabindex="-1"><a class="header-anchor" href="#_2-资源竞争"><span>2. 资源竞争</span></a></h3>
+<div class="language-bash line-numbers-mode" data-highlighter="prismjs" data-ext="sh"><pre v-pre><code class="language-bash"><span class="line"><span class="token comment"># 调整 CPU 共享</span></span>
+<span class="line"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token parameter variable">--name</span> web <span class="token punctuation">\</span></span>
+<span class="line">  --cpu-shares<span class="token operator">=</span><span class="token number">512</span> <span class="token punctuation">\</span></span>
+<span class="line">  nginx</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 调整内存限制</span></span>
+<span class="line"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token parameter variable">--name</span> web <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">--memory</span><span class="token operator">=</span>512m <span class="token punctuation">\</span></span>
+<span class="line">  --memory-swap<span class="token operator">=</span>1g <span class="token punctuation">\</span></span>
+<span class="line">  nginx</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 调整进程数</span></span>
+<span class="line"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token parameter variable">--name</span> web <span class="token punctuation">\</span></span>
+<span class="line">  --pids-limit<span class="token operator">=</span><span class="token number">100</span> <span class="token punctuation">\</span></span>
+<span class="line">  nginx</span>
+<span class="line"></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_3-网络延迟" tabindex="-1"><a class="header-anchor" href="#_3-网络延迟"><span>3. 网络延迟</span></a></h3>
+<div class="language-bash line-numbers-mode" data-highlighter="prismjs" data-ext="sh"><pre v-pre><code class="language-bash"><span class="line"><span class="token comment"># 使用 host 网络</span></span>
+<span class="line"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token parameter variable">--name</span> web <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">--network</span> <span class="token function">host</span> <span class="token punctuation">\</span></span>
+<span class="line">  nginx</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 使用自定义网络</span></span>
+<span class="line"><span class="token function">docker</span> network create <span class="token parameter variable">--driver</span> bridge <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">--opt</span> <span class="token assign-left variable">com.docker.network.bridge.name</span><span class="token operator">=</span>mybridge <span class="token punctuation">\</span></span>
+<span class="line">  my-network</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 使用 DNS 配置</span></span>
+<span class="line"><span class="token function">docker</span> run <span class="token parameter variable">-d</span> <span class="token parameter variable">--name</span> web <span class="token punctuation">\</span></span>
+<span class="line">  <span class="token parameter variable">--dns</span> <span class="token number">8.8</span>.8.8 <span class="token punctuation">\</span></span>
+<span class="line">  nginx</span>
+<span class="line"></span></code></pre>
+<div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="下一步" tabindex="-1"><a class="header-anchor" href="#下一步"><span>下一步</span></a></h2>
+<ul>
+<li>学习 <RouteLink to="/docker/security.html">安全实践</RouteLink></li>
+<li>了解 <RouteLink to="/docker/cicd.html">CI/CD 集成</RouteLink></li>
+<li>掌握 <RouteLink to="/docker/troubleshooting.html">故障排查</RouteLink></li>
+</ul>
+</div></template>
+
+

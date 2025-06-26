@@ -11,9 +11,10 @@ export default defineUserConfig({
     logo: "https://vuejs.press/images/hero.png",
     navbar: [
       { text: "首页", link: "/" },
-      { text: "指南", link: "/get-started" },
       { text: "WebRTC", link: "/webrtc" },
       { text: "Docker", link: "/docker/" },
+      { text: "ci", link: "/ci/" },
+      { text: "algorithm", link: "/algorithm/" },
     ],
     sidebar: {
       "/docker/": [
