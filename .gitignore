@@ -17,5 +17,6 @@ dist
 .DS_Store
 
 # VuePress
-.docs/.vuepress/.cache
-.docs/.vuepress/.temp
+# vuepress
+docs/.vuepress/.cache/
+docs/.vuepress/.temp/

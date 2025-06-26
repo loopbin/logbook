@@ -19,7 +19,7 @@ export default defineUserConfig({
     sidebar: {
       "/docker/": [
         {
-          text: "Docker 教程",
+          text: "Docker",
           children: ["/docker/README.md"],
         },
       ],
