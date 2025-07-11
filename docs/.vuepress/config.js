@@ -4,8 +4,8 @@ import { webpackBundler } from "@vuepress/bundler-webpack";
 
 export default defineUserConfig({
   lang: "zh-CN",
-  title: "开发日记",
-  description: "个人开发日记和技术笔记",
+  title: "开发笔记",
+  description: "个人开发备忘和技术笔记",
   base: "/logbook/",
   theme: defaultTheme({
     logo: "https://vuejs.press/images/hero.png",
