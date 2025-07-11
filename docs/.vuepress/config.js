@@ -6,7 +6,7 @@ export default defineUserConfig({
   lang: "zh-CN",
   title: "开发日记",
   description: "个人开发日记和技术笔记",
-  base: "/",
+  base: "/logbook/",
   theme: defaultTheme({
     logo: "https://vuejs.press/images/hero.png",
     navbar: [
