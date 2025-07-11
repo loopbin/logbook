@@ -116,6 +116,13 @@ docker rmi nginx
 # 运行容器
 docker run -d -p 80:80 nginx
 
+# 快速启动 Nginx 服务前端页面
+docker run -d -p 8080:80 -v $(pwd)/dist:/usr/share/nginx/html nginx:alpine
+# -d 后台运行
+# -p 容器80端口映射到宿主机8080
+# -v 卷积共享，将宿主机$(pwd)/dist目录映射到容器对应目录，共享文件
+
+
 # 查看运行中的容器
 docker ps
 
@@ -137,6 +144,9 @@ docker rm <container_id>
 ```bash
 # 进入容器内部
 docker exec -it <container_id> /bin/bash
+# -i：保持输入流打开
+# -t：分配终端
+# -it：让你可以“进到”容器里交互式操作
 
 # 查看容器日志
 docker logs <container_id>
@@ -192,6 +202,8 @@ CMD ["node", "app.js"]
 
 ```bash
 docker build -t my-node-app .
+# -t --tag的缩写，给构建的镜像起名（标签）
+# . 构建上下文为当前目录
 ```
 
 5. 运行容器：
@@ -210,6 +222,8 @@ docker run -d -p 3000:3000 my-node-app
 ```bash
 # 将当前用户添加到 docker 组
 sudo usermod -aG docker $USER
+# usermod Linux 下用于修改用户账户的命令
+# -aG -a append添加、G 分组
 
 # 重新登录使更改生效
 ```
@@ -236,6 +250,6 @@ docker system df
 
 ## 下一步
 
-- 学习 [Dockerfile 编写](./dockerfile.md)
+- 学习 [Dockerfile 编写](./docker_file.md)
 - 了解 [数据持久化](./volumes.md)
-- 掌握 [网络管理](./networking.md)
+- 掌握 [网络管理](./networking.md)\*\*\*\*
