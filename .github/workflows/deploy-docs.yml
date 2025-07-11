@@ -21,15 +21,11 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20.14.0
-          cache: pnpm
 
       - name: 安装 pnpm
         uses: pnpm/action-setup@v2
         with:
           version: 8
-
-      - name: 手动全局安装 pnpm（兜底）
-        run: npm install -g pnpm
 
       - name: 检查 pnpm 版本
         run: pnpm -v
