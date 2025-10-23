@@ -141,6 +141,320 @@ registerMicroApps(apps, {
 - 基于 Single-SPA，存在一些限制
 - 对某些第三方库兼容性不佳
 
+### qiankun 工作原理详解
+
+qiankun 的核心工作原理基于 HTML Entry 和沙箱隔离机制，主要包含以下几个关键步骤：
+
+#### 1. HTML Entry 解析过程
+
+```js
+// qiankun 内部实现的核心流程
+const importHTML = async (url) => {
+  // 1. 获取 HTML 内容
+  const html = await fetch(url).then((res) => res.text());
+
+  // 2. 解析 HTML，提取资源
+  const template = document.createElement("div");
+  template.innerHTML = html;
+
+  // 3. 提取 script 标签
+  const scripts = template.querySelectorAll("script");
+  const styles = template.querySelectorAll('link[rel="stylesheet"]');
+
+  // 4. 处理样式资源
+  const styleSheets = await Promise.all(
+    Array.from(styles).map((link) => {
+      return fetch(link.href).then((res) => res.text());
+    })
+  );
+
+  // 5. 处理脚本资源
+  const scriptsText = await Promise.all(
+    Array.from(scripts).map((script) => {
+      return script.src
+        ? fetch(script.src).then((res) => res.text())
+        : script.innerHTML;
+    })
+  );
+
+  return {
+    template: template.innerHTML,
+    scripts: scriptsText,
+    styles: styleSheets,
+  };
+};
+```
+
+#### 2. 子应用加载执行流程
+
+```js
+// 子应用加载的完整流程
+const loadApp = async (appConfig) => {
+  const { name, entry, container } = appConfig;
+
+  // 步骤1: 解析 HTML Entry
+  const { template, scripts, styles } = await importHTML(entry);
+
+  // 步骤2: 创建沙箱环境
+  const sandbox = new ProxySandbox(name);
+  sandbox.start();
+
+  // 步骤3: 样式隔离处理
+  const scopedCSS = scopedCSS(template, styles);
+
+  // 步骤4: 创建容器
+  const containerElement = document.querySelector(container);
+  containerElement.innerHTML = scopedCSS;
+
+  // 步骤5: 执行脚本
+  const execScripts = async () => {
+    const execScript = (scriptText) => {
+      // 在沙箱环境中执行脚本
+      const execScriptWithSandbox = `
+        (function(window, self, globalThis){
+          ${scriptText}
+        }).bind(window)(${sandbox.proxy}, ${sandbox.proxy}, ${sandbox.proxy});
+      `;
+      return new Function(execScriptWithSandbox)();
+    };
+
+    // 按顺序执行所有脚本
+    for (const script of scripts) {
+      await execScript(script);
+    }
+  };
+
+  // 步骤6: 获取生命周期函数
+  const lifecycle = await execScripts();
+
+  return {
+    mount: lifecycle.mount,
+    unmount: lifecycle.unmount,
+    bootstrap: lifecycle.bootstrap,
+  };
+};
+```
+
+#### 3. 沙箱隔离机制
+
+qiankun 提供了三种沙箱实现，其中 ProxySandbox 是最推荐的：
+
+```js
+// ProxySandbox 实现原理
+class ProxySandbox {
+  constructor(name) {
+    this.name = name;
+    this.proxy = null;
+    this.running = false;
+    this.sandboxRunning = false;
+    this.active = false;
+
+    // 创建代理对象
+    this.proxy = new Proxy(window, {
+      get: (target, prop) => {
+        // 优先从沙箱环境获取
+        if (this.sandboxRunning && this.proxy.hasOwnProperty(prop)) {
+          return this.proxy[prop];
+        }
+        // 从全局 window 获取
+        return target[prop];
+      },
+
+      set: (target, prop, value) => {
+        if (this.sandboxRunning) {
+          // 在沙箱环境中设置属性
+          this.proxy[prop] = value;
+          return true;
+        }
+        // 设置到全局 window
+        target[prop] = value;
+        return true;
+      },
+
+      has: (target, prop) => {
+        return prop in target || prop in this.proxy;
+      },
+
+      deleteProperty: (target, prop) => {
+        if (this.sandboxRunning) {
+          delete this.proxy[prop];
+          return true;
+        }
+        delete target[prop];
+        return true;
+      },
+    });
+  }
+
+  start() {
+    this.sandboxRunning = true;
+    this.active = true;
+  }
+
+  stop() {
+    this.sandboxRunning = false;
+    this.active = false;
+  }
+}
+```
+
+#### 4. 样式隔离机制
+
+```js
+// 样式隔离实现
+const scopedCSS = (template, styles) => {
+  const scopedTemplate = template.replace(
+    /<style[^>]*>([\s\S]*?)<\/style>/gi,
+    (match, css) => {
+      // 为每个 CSS 规则添加作用域前缀
+      const scopedCSS = css.replace(
+        /([^{}]+){([^{}]*)}/g,
+        (match, selector, rules) => {
+          const scopedSelector = selector
+            .split(",")
+            .map((s) => `[data-qiankun="${appName}"] ${s.trim()}`)
+            .join(", ");
+          return `${scopedSelector} { ${rules} }`;
+        }
+      );
+      return `<style>${scopedCSS}</style>`;
+    }
+  );
+
+  return scopedTemplate;
+};
+```
+
+#### 5. 生命周期管理
+
+```js
+// 子应用生命周期执行
+const mountApp = async (app) => {
+  try {
+    // 1. 启动沙箱
+    app.sandbox.start();
+
+    // 2. 执行 bootstrap
+    if (app.lifecycle.bootstrap) {
+      await app.lifecycle.bootstrap();
+    }
+
+    // 3. 执行 mount
+    if (app.lifecycle.mount) {
+      await app.lifecycle.mount({
+        container: app.container,
+        props: app.props,
+      });
+    }
+
+    app.status = "mounted";
+  } catch (error) {
+    console.error(`应用 ${app.name} 挂载失败:`, error);
+  }
+};
+
+const unmountApp = async (app) => {
+  try {
+    // 1. 执行 unmount
+    if (app.lifecycle.unmount) {
+      await app.lifecycle.unmount();
+    }
+
+    // 2. 停止沙箱
+    app.sandbox.stop();
+
+    // 3. 清理 DOM
+    app.container.innerHTML = "";
+
+    app.status = "unmounted";
+  } catch (error) {
+    console.error(`应用 ${app.name} 卸载失败:`, error);
+  }
+};
+```
+
+#### 6. 路由匹配与切换
+
+```js
+// 路由匹配机制
+const matchRoute = (pathname) => {
+  return apps.filter((app) => {
+    if (typeof app.activeRule === "string") {
+      return pathname.startsWith(app.activeRule);
+    }
+    if (typeof app.activeRule === "function") {
+      return app.activeRule(pathname);
+    }
+    if (app.activeRule instanceof RegExp) {
+      return app.activeRule.test(pathname);
+    }
+    return false;
+  });
+};
+
+// 路由变化监听
+const listenRouteChange = () => {
+  window.addEventListener("popstate", handleRouteChange);
+  window.addEventListener("pushstate", handleRouteChange);
+  window.addEventListener("replacestate", handleRouteChange);
+
+  // 重写 history 方法
+  const originalPushState = history.pushState;
+  const originalReplaceState = history.replaceState;
+
+  history.pushState = function (...args) {
+    originalPushState.apply(history, args);
+    handleRouteChange();
+  };
+
+  history.replaceState = function (...args) {
+    originalReplaceState.apply(history, args);
+    handleRouteChange();
+  };
+};
+
+const handleRouteChange = () => {
+  const pathname = window.location.pathname;
+  const matchedApps = matchRoute(pathname);
+
+  // 卸载当前应用
+  currentApp && unmountApp(currentApp);
+
+  // 挂载新应用
+  if (matchedApps.length > 0) {
+    currentApp = matchedApps[0];
+    mountApp(currentApp);
+  }
+};
+```
+
+#### 7. 预加载机制
+
+```js
+// 应用预加载
+const prefetchApps = (apps) => {
+  apps.forEach((app) => {
+    if (app.prefetch) {
+      // 预加载应用资源
+      importHTML(app.entry).then(({ scripts, styles }) => {
+        // 缓存资源
+        app.cache = { scripts, styles };
+      });
+    }
+  });
+};
+```
+
+### 核心优势
+
+1. **HTML Entry**: 无需改造现有应用，直接使用 HTML 作为入口
+2. **沙箱隔离**: 完整的 JS 执行环境隔离，避免全局污染
+3. **样式隔离**: 支持多种样式隔离方案，避免样式冲突
+4. **生命周期管理**: 完整的应用生命周期管理
+5. **预加载优化**: 支持应用预加载，提升用户体验
+
+qiankun 通过重写 Element.prototype 上的 appendChild 和 insertBefore 等方法，拦截所有插入 `<script>` 的操作，通过 fetch 加载 src 指定的脚本文件，然后用 new Function() 运行，来把 window 指定到自己创建的 Proxy 对象上，以构建一个沙箱环境。
+
 ## 3. Module Federation
 
 ### 概述
