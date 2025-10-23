@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="generator" content="VuePress 2.0.0-rc.26" />
+    <style>
+      :root {
+        --vp-c-bg: #fff;
+      }
+
+      [data-theme='dark'] {
+        --vp-c-bg: #1b1b1f;
+      }
+
+      html,
+      body {
+        background-color: var(--vp-c-bg);
+      }
+    </style>
+    <script>
+      const useChoice = localStorage.getItem('vuepress-color-scheme')
+      const systemStatus =
+        'matchMedia' in window
+          ? window.matchMedia('(prefers-color-scheme: dark)').matches
+          : false
+
+      if (useChoice === 'light') {
+        document.documentElement.dataset.theme = 'light'
+      } else if (useChoice === 'dark' || systemStatus) {
+        document.documentElement.dataset.theme = 'dark'
+      }
+    </script>
+    <title>Service Mesh 配置详解 | 开发笔记</title><meta name="description" content="个人开发备忘和技术笔记">
+    <link rel="stylesheet" href="/logbook/assets/css/styles.f2ab0c8f.css">
+    <link rel="preload" href="/logbook/assets/js/runtime~app.8c870cb4.js" as="script"><link rel="preload" href="/logbook/assets/css/styles.f2ab0c8f.css" as="style"><link rel="preload" href="/logbook/assets/js/9173.807ef4b6.js" as="script"><link rel="preload" href="/logbook/assets/js/app.cb7e2e6a.js" as="script">
+    <link rel="prefetch" href="/logbook/assets/js/micro_fe_implementation-principles.html.f1701e25.js" as="script"><link rel="prefetch" href="/logbook/assets/js/workspaces_micro-frontends.html.1f8b663a.js" as="script"><link rel="prefetch" href="/logbook/assets/js/trading_risk-management_position-sizing.html.cfa6b4e8.js" as="script"><link rel="prefetch" href="/logbook/assets/js/trading_strategies_short-term.html.a2b7b93b.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_data-structures_tree.html.7f64ae4c.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_techniques_greedy.html.b1f30c61.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_data-structures_stack-queue.html.ab995c37.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_data-structures_graph.html.192ecae2.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_data-structures_linked-list.html.c1fbebbb.js" as="script"><link rel="prefetch" href="/logbook/assets/js/cache_cache-troubleshooting.html.3a775d52.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_techniques_backtracking.html.a11846fa.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_techniques_dynamic-programming.html.84d74678.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_techniques_divide-conquer.html.0e1be532.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_data-structures_heap.html.13fe08e2.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_analysis_complexity.html.473093a3.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_service.html.572a007b.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_data-structures_array.html.4d353edd.js" as="script"><link rel="prefetch" href="/logbook/assets/js/trading_technical-analysis_basics.html.0e9eef42.js" as="script"><link rel="prefetch" href="/logbook/assets/js/cache_cache-strategies.html.38d90412.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_sorting_heap-sort.html.32624c73.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_secret.html.104a69cf.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_security.html.73c3b513.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_statefulset.html.ab3599c5.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_analysis_optimization.html.11b6bc1b.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_monitoring.html.9973a720.js" as="script"><link rel="prefetch" href="/logbook/assets/js/docker_cicd.html.1a4388cb.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_networking.html.db322fae.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_ingress.html.e625416d.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_logging.html.6dca0683.js" as="script"><link rel="prefetch" href="/logbook/assets/js/docker_compose.html.3c4fe746.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_storage.html.13a97437.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_daemonset.html.a2f77067.js" as="script"><link rel="prefetch" href="/logbook/assets/js/docker_performance.html.484a2d09.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_service-mesh.html.8faecc0d.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_sorting_merge-sort.html.3da4e41e.js" as="script"><link rel="prefetch" href="/logbook/assets/js/micro_fe_implementation-solutions.html.e58c5cb6.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_configmap.html.838b33e0.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_basics.html.df083b75.js" as="script"><link rel="prefetch" href="/logbook/assets/js/workspaces_monorepo.html.eacc46c7.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_sorting_quick-sort.html.db30f46b.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_rbac.html.0ecf936e.js" as="script"><link rel="prefetch" href="/logbook/assets/js/workspaces_index.html.e42e8ebd.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_sorting_counting-sort.html.2fdb775f.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_storage-class.html.acedca07.js" as="script"><link rel="prefetch" href="/logbook/assets/js/docker_monitoring.html.7349fbc4.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_certificates.html.6ad78048.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_job-cronjob.html.6571f04f.js" as="script"><link rel="prefetch" href="/logbook/assets/js/docker_troubleshooting.html.48c7bf58.js" as="script"><link rel="prefetch" href="/logbook/assets/js/micro_fe_sandbox.html.e7a747a7.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_sorting_insertion-sort.html.7f2672dc.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_deployment.html.bf300d35.js" as="script"><link rel="prefetch" href="/logbook/assets/js/docker_security.html.c5174331.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_searching_binary-search.html.bcd823d0.js" as="script"><link rel="prefetch" href="/logbook/assets/js/docker_volumes.html.fecbc9c2.js" as="script"><link rel="prefetch" href="/logbook/assets/js/docker_docker_file.html.0c06ee7a.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_sorting_selection-sort.html.c1d40fb8.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_searching_linear-search.html.83bc88bd.js" as="script"><link rel="prefetch" href="/logbook/assets/js/docker_basics.html.de397476.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_sorting_bubble-sort.html.c27f3d85.js" as="script"><link rel="prefetch" href="/logbook/assets/js/cache_cache-types.html.8f3758c6.js" as="script"><link rel="prefetch" href="/logbook/assets/js/docker_networking.html.f55af662.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_index.html.2621bfc8.js" as="script"><link rel="prefetch" href="/logbook/assets/js/docker_common-operations.html.58c46e5f.js" as="script"><link rel="prefetch" href="/logbook/assets/js/ci_devops.html.e00cca10.js" as="script"><link rel="prefetch" href="/logbook/assets/js/ci_index.html.3a9f8563.js" as="script"><link rel="prefetch" href="/logbook/assets/js/react_state.html.959b42e0.js" as="script"><link rel="prefetch" href="/logbook/assets/js/mongoose_operations.html.7b1e764d.js" as="script"><link rel="prefetch" href="/logbook/assets/js/mongoose_schema-model.html.67359042.js" as="script"><link rel="prefetch" href="/logbook/assets/js/docker_learning-path.html.9ac54458.js" as="script"><link rel="prefetch" href="/logbook/assets/js/trading_index.html.ae3a7c92.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_index.html.3a61f74f.js" as="script"><link rel="prefetch" href="/logbook/assets/js/mongoose_install.html.e6119034.js" as="script"><link rel="prefetch" href="/logbook/assets/js/mongoose_plugins.html.e71c18d0.js" as="script"><link rel="prefetch" href="/logbook/assets/js/cache_index.html.7aebda4f.js" as="script"><link rel="prefetch" href="/logbook/assets/js/docker_index.html.3478e8ae.js" as="script"><link rel="prefetch" href="/logbook/assets/js/https_index.html.83c7ee7c.js" as="script"><link rel="prefetch" href="/logbook/assets/js/mongoose_middleware.html.ee8cad56.js" as="script"><link rel="prefetch" href="/logbook/assets/js/mongoose_index.html.53f6fcbf.js" as="script"><link rel="prefetch" href="/logbook/assets/js/webrtc_index.html.81fb68fa.js" as="script"><link rel="prefetch" href="/logbook/assets/js/workspaces_qa.html.b6aaad88.js" as="script"><link rel="prefetch" href="/logbook/assets/js/mongoose_faq.html.bdf70966.js" as="script"><link rel="prefetch" href="/logbook/assets/js/notes.html.27c33920.js" as="script"><link rel="prefetch" href="/logbook/assets/js/index.html.3efd9740.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_data-structures_hash-table.html.168f5230.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_searching_hash-search.html.08e0a50c.js" as="script"><link rel="prefetch" href="/logbook/assets/js/404.html.d909ee5a.js" as="script">
+  </head>
+  <body>
+    <div id="app"><!--[--><div class="vp-theme-container no-sidebar external-link-icon" vp-container><!--[--><header class="vp-navbar" vp-navbar><div class="vp-toggle-sidebar-button" title="toggle sidebar" aria-expanded="false" role="button" tabindex="0"><div class="icon" aria-hidden="true"><span></span><span></span><span></span></div></div><span><a class="route-link" href="/logbook/"><img class="vp-site-logo" src="https://vuejs.press/images/hero.png" alt="开发笔记"><span class="vp-site-name vp-hide-mobile" aria-hidden="true">开发笔记</span></a></span><div class="vp-navbar-items-wrapper" style=""><!--[--><!--]--><nav class="vp-navbar-items vp-hide-mobile" aria-label="site navigation"><!--[--><div class="vp-navbar-item"><a class="route-link auto-link" href="/logbook/" aria-label="首页"><!--[--><!--[--><!--]--><!--]-->首页<!--[--><!--[--><!--]--><!--]--></a></div><div class="vp-navbar-item"><a class="route-link auto-link" href="/logbook/webrtc.html" aria-label="WebRTC"><!--[--><!--[--><!--]--><!--]-->WebRTC<!--[--><!--[--><!--]--><!--]--></a></div><div class="vp-navbar-item"><a class="route-link auto-link" href="/logbook/docker/" aria-label="Docker"><!--[--><!--[--><!--]--><!--]-->Docker<!--[--><!--[--><!--]--><!--]--></a></div><div class="vp-navbar-item"><a class="route-link auto-link" href="/logbook/ci/" aria-label="ci"><!--[--><!--[--><!--]--><!--]-->ci<!--[--><!--[--><!--]--><!--]--></a></div><div class="vp-navbar-item"><a class="route-link auto-link" href="/logbook/algorithm/" aria-label="algorithm"><!--[--><!--[--><!--]--><!--]-->algorithm<!--[--><!--[--><!--]--><!--]--></a></div><!--]--></nav><!--[--><!--]--><button type="button" class="vp-toggle-color-mode-button" title="toggle color mode"><svg class="light-icon" viewbox="0 0 32 32" style=""><path d="M16 12.005a4 4 0 1 1-4 4a4.005 4.005 0 0 1 4-4m0-2a6 6 0 1 0 6 6a6 6 0 0 0-6-6z" fill="currentColor"></path><path d="M5.394 6.813l1.414-1.415l3.506 3.506L8.9 10.318z" fill="currentColor"></path><path d="M2 15.005h5v2H2z" fill="currentColor"></path><path d="M5.394 25.197L8.9 21.691l1.414 1.415l-3.506 3.505z" fill="currentColor"></path><path d="M15 25.005h2v5h-2z" fill="currentColor"></path><path d="M21.687 23.106l1.414-1.415l3.506 3.506l-1.414 1.414z" fill="currentColor"></path><path d="M25 15.005h5v2h-5z" fill="currentColor"></path><path d="M21.687 8.904l3.506-3.506l1.414 1.415l-3.506 3.505z" fill="currentColor"></path><path d="M15 2.005h2v5h-2z" fill="currentColor"></path></svg><svg class="dark-icon" viewbox="0 0 32 32" style="display:none;"><path d="M13.502 5.414a15.075 15.075 0 0 0 11.594 18.194a11.113 11.113 0 0 1-7.975 3.39c-.138 0-.278.005-.418 0a11.094 11.094 0 0 1-3.2-21.584M14.98 3a1.002 1.002 0 0 0-.175.016a13.096 13.096 0 0 0 1.825 25.981c.164.006.328 0 .49 0a13.072 13.072 0 0 0 10.703-5.555a1.01 1.01 0 0 0-.783-1.565A13.08 13.08 0 0 1 15.89 4.38A1.015 1.015 0 0 0 14.98 3z" fill="currentColor"></path></svg></button><!----></div></header><!--]--><div class="vp-sidebar-mask"></div><!--[--><aside class="vp-sidebar" vp-sidebar><nav class="vp-navbar-items" aria-label="site navigation"><!--[--><div class="vp-navbar-item"><a class="route-link auto-link" href="/logbook/" aria-label="首页"><!--[--><!--[--><!--]--><!--]-->首页<!--[--><!--[--><!--]--><!--]--></a></div><div class="vp-navbar-item"><a class="route-link auto-link" href="/logbook/webrtc.html" aria-label="WebRTC"><!--[--><!--[--><!--]--><!--]-->WebRTC<!--[--><!--[--><!--]--><!--]--></a></div><div class="vp-navbar-item"><a class="route-link auto-link" href="/logbook/docker/" aria-label="Docker"><!--[--><!--[--><!--]--><!--]-->Docker<!--[--><!--[--><!--]--><!--]--></a></div><div class="vp-navbar-item"><a class="route-link auto-link" href="/logbook/ci/" aria-label="ci"><!--[--><!--[--><!--]--><!--]-->ci<!--[--><!--[--><!--]--><!--]--></a></div><div class="vp-navbar-item"><a class="route-link auto-link" href="/logbook/algorithm/" aria-label="algorithm"><!--[--><!--[--><!--]--><!--]-->algorithm<!--[--><!--[--><!--]--><!--]--></a></div><!--]--></nav><!--[--><!--]--><!----><!--[--><!--]--></aside><!--]--><!--[--><main class="vp-page"><!--[--><!--]--><div vp-content><!--[--><!--]--><div id="content"><h1 id="service-mesh-配置详解" tabindex="-1"><a class="header-anchor" href="#service-mesh-配置详解"><span>Service Mesh 配置详解</span></a></h1><h2 id="概述" tabindex="-1"><a class="header-anchor" href="#概述"><span>概述</span></a></h2><p>Service Mesh 是处理服务间通信的基础设施层，提供流量管理、安全、可观测性等功能。Istio 是最流行的 Service Mesh 实现。</p><h2 id="istio-安装" tabindex="-1"><a class="header-anchor" href="#istio-安装"><span>Istio 安装</span></a></h2><h3 id="_1-安装-istio" tabindex="-1"><a class="header-anchor" href="#_1-安装-istio"><span>1. 安装 Istio</span></a></h3><div class="language-bash line-numbers-mode" data-highlighter="prismjs" data-ext="sh"><pre><code class="language-bash"><span class="line"><span class="token comment"># 下载 Istio</span></span>
+<span class="line"><span class="token function">curl</span> <span class="token parameter variable">-L</span> https://istio.io/downloadIstio <span class="token operator">|</span> <span class="token function">sh</span> -</span>
+<span class="line"><span class="token builtin class-name">cd</span> istio-1.19.0</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 安装 Istio</span></span>
+<span class="line">istioctl <span class="token function">install</span> <span class="token parameter variable">--set</span> <span class="token assign-left variable">values.defaultRevision</span><span class="token operator">=</span>default</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 启用 sidecar 注入</span></span>
+<span class="line">kubectl label namespace default istio-injection<span class="token operator">=</span>enabled</span>
+<span class="line"></span></code></pre><div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0;"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_2-验证安装" tabindex="-1"><a class="header-anchor" href="#_2-验证安装"><span>2. 验证安装</span></a></h3><div class="language-bash line-numbers-mode" data-highlighter="prismjs" data-ext="sh"><pre><code class="language-bash"><span class="line"><span class="token comment"># 查看 Istio 组件</span></span>
+<span class="line">kubectl get pods <span class="token parameter variable">-n</span> istio-system</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 查看 Istio 配置</span></span>
+<span class="line">istioctl version</span>
+<span class="line"></span></code></pre><div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0;"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="流量管理" tabindex="-1"><a class="header-anchor" href="#流量管理"><span>流量管理</span></a></h2><h3 id="_1-virtualservice-配置" tabindex="-1"><a class="header-anchor" href="#_1-virtualservice-配置"><span>1. VirtualService 配置</span></a></h3><div class="language-yaml line-numbers-mode" data-highlighter="prismjs" data-ext="yml"><pre><code class="language-yaml"><span class="line"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> networking.istio.io/v1alpha3</span>
+<span class="line"><span class="token key atrule">kind</span><span class="token punctuation">:</span> VirtualService</span>
+<span class="line"><span class="token key atrule">metadata</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">name</span><span class="token punctuation">:</span> my<span class="token punctuation">-</span>virtual<span class="token punctuation">-</span>service</span>
+<span class="line"><span class="token key atrule">spec</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">hosts</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token punctuation">-</span> myapp.example.com</span>
+<span class="line">  <span class="token key atrule">http</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token punctuation">-</span> <span class="token key atrule">match</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token punctuation">-</span> <span class="token key atrule">uri</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token key atrule">prefix</span><span class="token punctuation">:</span> /api</span>
+<span class="line">      <span class="token key atrule">route</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token punctuation">-</span> <span class="token key atrule">destination</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token key atrule">host</span><span class="token punctuation">:</span> api<span class="token punctuation">-</span>service</span>
+<span class="line">            <span class="token key atrule">port</span><span class="token punctuation">:</span></span>
+<span class="line">              <span class="token key atrule">number</span><span class="token punctuation">:</span> <span class="token number">80</span></span>
+<span class="line">    <span class="token punctuation">-</span> <span class="token key atrule">match</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token punctuation">-</span> <span class="token key atrule">uri</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token key atrule">prefix</span><span class="token punctuation">:</span> /</span>
+<span class="line">      <span class="token key atrule">route</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token punctuation">-</span> <span class="token key atrule">destination</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token key atrule">host</span><span class="token punctuation">:</span> frontend<span class="token punctuation">-</span>service</span>
+<span class="line">            <span class="token key atrule">port</span><span class="token punctuation">:</span></span>
+<span class="line">              <span class="token key atrule">number</span><span class="token punctuation">:</span> <span class="token number">80</span></span>
+<span class="line"></span></code></pre><div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0;"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_2-destinationrule-配置" tabindex="-1"><a class="header-anchor" href="#_2-destinationrule-配置"><span>2. DestinationRule 配置</span></a></h3><div class="language-yaml line-numbers-mode" data-highlighter="prismjs" data-ext="yml"><pre><code class="language-yaml"><span class="line"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> networking.istio.io/v1alpha3</span>
+<span class="line"><span class="token key atrule">kind</span><span class="token punctuation">:</span> DestinationRule</span>
+<span class="line"><span class="token key atrule">metadata</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">name</span><span class="token punctuation">:</span> my<span class="token punctuation">-</span>destination<span class="token punctuation">-</span>rule</span>
+<span class="line"><span class="token key atrule">spec</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">host</span><span class="token punctuation">:</span> my<span class="token punctuation">-</span>service</span>
+<span class="line">  <span class="token key atrule">trafficPolicy</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token key atrule">loadBalancer</span><span class="token punctuation">:</span></span>
+<span class="line">      <span class="token key atrule">simple</span><span class="token punctuation">:</span> ROUND_ROBIN</span>
+<span class="line">    <span class="token key atrule">connectionPool</span><span class="token punctuation">:</span></span>
+<span class="line">      <span class="token key atrule">tcp</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token key atrule">maxConnections</span><span class="token punctuation">:</span> <span class="token number">10</span></span>
+<span class="line">      <span class="token key atrule">http</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token key atrule">http1MaxPendingRequests</span><span class="token punctuation">:</span> <span class="token number">10</span></span>
+<span class="line">        <span class="token key atrule">maxRequestsPerConnection</span><span class="token punctuation">:</span> <span class="token number">2</span></span>
+<span class="line">    <span class="token key atrule">circuitBreaker</span><span class="token punctuation">:</span></span>
+<span class="line">      <span class="token key atrule">consecutiveErrors</span><span class="token punctuation">:</span> <span class="token number">3</span></span>
+<span class="line">      <span class="token key atrule">interval</span><span class="token punctuation">:</span> 30s</span>
+<span class="line">      <span class="token key atrule">baseEjectionTime</span><span class="token punctuation">:</span> 30s</span>
+<span class="line"></span></code></pre><div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0;"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_3-流量分割" tabindex="-1"><a class="header-anchor" href="#_3-流量分割"><span>3. 流量分割</span></a></h3><div class="language-yaml line-numbers-mode" data-highlighter="prismjs" data-ext="yml"><pre><code class="language-yaml"><span class="line"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> networking.istio.io/v1alpha3</span>
+<span class="line"><span class="token key atrule">kind</span><span class="token punctuation">:</span> VirtualService</span>
+<span class="line"><span class="token key atrule">metadata</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">name</span><span class="token punctuation">:</span> my<span class="token punctuation">-</span>virtual<span class="token punctuation">-</span>service</span>
+<span class="line"><span class="token key atrule">spec</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">hosts</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token punctuation">-</span> myapp.example.com</span>
+<span class="line">  <span class="token key atrule">http</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token punctuation">-</span> <span class="token key atrule">route</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token punctuation">-</span> <span class="token key atrule">destination</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token key atrule">host</span><span class="token punctuation">:</span> my<span class="token punctuation">-</span>service</span>
+<span class="line">            <span class="token key atrule">subset</span><span class="token punctuation">:</span> v1</span>
+<span class="line">          <span class="token key atrule">weight</span><span class="token punctuation">:</span> <span class="token number">90</span></span>
+<span class="line">        <span class="token punctuation">-</span> <span class="token key atrule">destination</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token key atrule">host</span><span class="token punctuation">:</span> my<span class="token punctuation">-</span>service</span>
+<span class="line">            <span class="token key atrule">subset</span><span class="token punctuation">:</span> v2</span>
+<span class="line">          <span class="token key atrule">weight</span><span class="token punctuation">:</span> <span class="token number">10</span></span>
+<span class="line"><span class="token punctuation">---</span></span>
+<span class="line"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> networking.istio.io/v1alpha3</span>
+<span class="line"><span class="token key atrule">kind</span><span class="token punctuation">:</span> DestinationRule</span>
+<span class="line"><span class="token key atrule">metadata</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">name</span><span class="token punctuation">:</span> my<span class="token punctuation">-</span>destination<span class="token punctuation">-</span>rule</span>
+<span class="line"><span class="token key atrule">spec</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">host</span><span class="token punctuation">:</span> my<span class="token punctuation">-</span>service</span>
+<span class="line">  <span class="token key atrule">subsets</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> v1</span>
+<span class="line">      <span class="token key atrule">labels</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token key atrule">version</span><span class="token punctuation">:</span> v1</span>
+<span class="line">    <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> v2</span>
+<span class="line">      <span class="token key atrule">labels</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token key atrule">version</span><span class="token punctuation">:</span> v2</span>
+<span class="line"></span></code></pre><div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0;"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="安全配置" tabindex="-1"><a class="header-anchor" href="#安全配置"><span>安全配置</span></a></h2><h3 id="_1-认证策略" tabindex="-1"><a class="header-anchor" href="#_1-认证策略"><span>1. 认证策略</span></a></h3><div class="language-yaml line-numbers-mode" data-highlighter="prismjs" data-ext="yml"><pre><code class="language-yaml"><span class="line"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> security.istio.io/v1beta1</span>
+<span class="line"><span class="token key atrule">kind</span><span class="token punctuation">:</span> PeerAuthentication</span>
+<span class="line"><span class="token key atrule">metadata</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">name</span><span class="token punctuation">:</span> default</span>
+<span class="line">  <span class="token key atrule">namespace</span><span class="token punctuation">:</span> istio<span class="token punctuation">-</span>system</span>
+<span class="line"><span class="token key atrule">spec</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">mtls</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token key atrule">mode</span><span class="token punctuation">:</span> STRICT</span>
+<span class="line"><span class="token punctuation">---</span></span>
+<span class="line"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> security.istio.io/v1beta1</span>
+<span class="line"><span class="token key atrule">kind</span><span class="token punctuation">:</span> PeerAuthentication</span>
+<span class="line"><span class="token key atrule">metadata</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">name</span><span class="token punctuation">:</span> my<span class="token punctuation">-</span>app<span class="token punctuation">-</span>policy</span>
+<span class="line"><span class="token key atrule">spec</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">selector</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token key atrule">matchLabels</span><span class="token punctuation">:</span></span>
+<span class="line">      <span class="token key atrule">app</span><span class="token punctuation">:</span> my<span class="token punctuation">-</span>app</span>
+<span class="line">  <span class="token key atrule">mtls</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token key atrule">mode</span><span class="token punctuation">:</span> PERMISSIVE</span>
+<span class="line"></span></code></pre><div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0;"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_2-授权策略" tabindex="-1"><a class="header-anchor" href="#_2-授权策略"><span>2. 授权策略</span></a></h3><div class="language-yaml line-numbers-mode" data-highlighter="prismjs" data-ext="yml"><pre><code class="language-yaml"><span class="line"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> security.istio.io/v1beta1</span>
+<span class="line"><span class="token key atrule">kind</span><span class="token punctuation">:</span> AuthorizationPolicy</span>
+<span class="line"><span class="token key atrule">metadata</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">name</span><span class="token punctuation">:</span> my<span class="token punctuation">-</span>app<span class="token punctuation">-</span>policy</span>
+<span class="line"><span class="token key atrule">spec</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">selector</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token key atrule">matchLabels</span><span class="token punctuation">:</span></span>
+<span class="line">      <span class="token key atrule">app</span><span class="token punctuation">:</span> my<span class="token punctuation">-</span>app</span>
+<span class="line">  <span class="token key atrule">rules</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token punctuation">-</span> <span class="token key atrule">from</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token punctuation">-</span> <span class="token key atrule">source</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token key atrule">principals</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token string">&quot;cluster.local/ns/default/sa/frontend&quot;</span><span class="token punctuation">]</span></span>
+<span class="line">      <span class="token key atrule">to</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token punctuation">-</span> <span class="token key atrule">operation</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token key atrule">methods</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token string">&quot;GET&quot;</span><span class="token punctuation">,</span> <span class="token string">&quot;POST&quot;</span><span class="token punctuation">]</span></span>
+<span class="line">            <span class="token key atrule">paths</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token string">&quot;/api/*&quot;</span><span class="token punctuation">]</span></span>
+<span class="line"></span></code></pre><div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0;"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_3-jwt-认证" tabindex="-1"><a class="header-anchor" href="#_3-jwt-认证"><span>3. JWT 认证</span></a></h3><div class="language-yaml line-numbers-mode" data-highlighter="prismjs" data-ext="yml"><pre><code class="language-yaml"><span class="line"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> security.istio.io/v1beta1</span>
+<span class="line"><span class="token key atrule">kind</span><span class="token punctuation">:</span> RequestAuthentication</span>
+<span class="line"><span class="token key atrule">metadata</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">name</span><span class="token punctuation">:</span> jwt<span class="token punctuation">-</span>auth</span>
+<span class="line"><span class="token key atrule">spec</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">selector</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token key atrule">matchLabels</span><span class="token punctuation">:</span></span>
+<span class="line">      <span class="token key atrule">app</span><span class="token punctuation">:</span> my<span class="token punctuation">-</span>app</span>
+<span class="line">  <span class="token key atrule">jwtRules</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token punctuation">-</span> <span class="token key atrule">issuer</span><span class="token punctuation">:</span> <span class="token string">&quot;https://auth.example.com&quot;</span></span>
+<span class="line">      <span class="token key atrule">jwksUri</span><span class="token punctuation">:</span> <span class="token string">&quot;https://auth.example.com/.well-known/jwks.json&quot;</span></span>
+<span class="line"><span class="token punctuation">---</span></span>
+<span class="line"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> security.istio.io/v1beta1</span>
+<span class="line"><span class="token key atrule">kind</span><span class="token punctuation">:</span> AuthorizationPolicy</span>
+<span class="line"><span class="token key atrule">metadata</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">name</span><span class="token punctuation">:</span> jwt<span class="token punctuation">-</span>policy</span>
+<span class="line"><span class="token key atrule">spec</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">selector</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token key atrule">matchLabels</span><span class="token punctuation">:</span></span>
+<span class="line">      <span class="token key atrule">app</span><span class="token punctuation">:</span> my<span class="token punctuation">-</span>app</span>
+<span class="line">  <span class="token key atrule">rules</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token punctuation">-</span> <span class="token key atrule">from</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token punctuation">-</span> <span class="token key atrule">source</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token key atrule">requestPrincipals</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token string">&quot;*&quot;</span><span class="token punctuation">]</span></span>
+<span class="line">      <span class="token key atrule">to</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token punctuation">-</span> <span class="token key atrule">operation</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token key atrule">methods</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token string">&quot;GET&quot;</span><span class="token punctuation">,</span> <span class="token string">&quot;POST&quot;</span><span class="token punctuation">]</span></span>
+<span class="line"></span></code></pre><div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0;"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="可观测性" tabindex="-1"><a class="header-anchor" href="#可观测性"><span>可观测性</span></a></h2><h3 id="_1-指标收集" tabindex="-1"><a class="header-anchor" href="#_1-指标收集"><span>1. 指标收集</span></a></h3><div class="language-yaml line-numbers-mode" data-highlighter="prismjs" data-ext="yml"><pre><code class="language-yaml"><span class="line"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1</span>
+<span class="line"><span class="token key atrule">kind</span><span class="token punctuation">:</span> ConfigMap</span>
+<span class="line"><span class="token key atrule">metadata</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">name</span><span class="token punctuation">:</span> prometheus</span>
+<span class="line">  <span class="token key atrule">namespace</span><span class="token punctuation">:</span> istio<span class="token punctuation">-</span>system</span>
+<span class="line"><span class="token key atrule">data</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">prometheus.yml</span><span class="token punctuation">:</span> <span class="token punctuation">|</span><span class="token scalar string"></span>
+<span class="line">    global:</span>
+<span class="line">      scrape_interval: 15s</span>
+<span class="line">    scrape_configs:</span>
+<span class="line">    - job_name: &#39;istio-mesh&#39;</span>
+<span class="line">      kubernetes_sd_configs:</span>
+<span class="line">      - role: endpoints</span>
+<span class="line">        namespaces:</span>
+<span class="line">          names:</span>
+<span class="line">          - istio-system</span>
+<span class="line">      relabel_configs:</span>
+<span class="line">      - source_labels: [__meta_kubernetes_service_name]</span>
+<span class="line">        action: keep</span>
+<span class="line">        regex: istio-mesh</span></span>
+<span class="line"></span></code></pre><div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0;"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_2-分布式追踪" tabindex="-1"><a class="header-anchor" href="#_2-分布式追踪"><span>2. 分布式追踪</span></a></h3><div class="language-yaml line-numbers-mode" data-highlighter="prismjs" data-ext="yml"><pre><code class="language-yaml"><span class="line"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1</span>
+<span class="line"><span class="token key atrule">kind</span><span class="token punctuation">:</span> ConfigMap</span>
+<span class="line"><span class="token key atrule">metadata</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">name</span><span class="token punctuation">:</span> jaeger</span>
+<span class="line">  <span class="token key atrule">namespace</span><span class="token punctuation">:</span> istio<span class="token punctuation">-</span>system</span>
+<span class="line"><span class="token key atrule">data</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">jaeger.yaml</span><span class="token punctuation">:</span> <span class="token punctuation">|</span><span class="token scalar string"></span>
+<span class="line">    service:</span>
+<span class="line">      name: jaeger</span>
+<span class="line">    sampling:</span>
+<span class="line">      type: const</span>
+<span class="line">      param: 1</span>
+<span class="line">    reporter:</span>
+<span class="line">      logSpans: true</span>
+<span class="line">      localAgentHostPort: jaeger-agent:14268</span></span>
+<span class="line"></span></code></pre><div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0;"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_3-访问日志" tabindex="-1"><a class="header-anchor" href="#_3-访问日志"><span>3. 访问日志</span></a></h3><div class="language-yaml line-numbers-mode" data-highlighter="prismjs" data-ext="yml"><pre><code class="language-yaml"><span class="line"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1</span>
+<span class="line"><span class="token key atrule">kind</span><span class="token punctuation">:</span> ConfigMap</span>
+<span class="line"><span class="token key atrule">metadata</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">name</span><span class="token punctuation">:</span> fluentd</span>
+<span class="line">  <span class="token key atrule">namespace</span><span class="token punctuation">:</span> istio<span class="token punctuation">-</span>system</span>
+<span class="line"><span class="token key atrule">data</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">fluent.conf</span><span class="token punctuation">:</span> <span class="token punctuation">|</span><span class="token scalar string"></span>
+<span class="line">    &lt;source&gt;</span>
+<span class="line">      @type tail</span>
+<span class="line">      path /var/log/istio-proxy.log</span>
+<span class="line">      pos_file /var/log/istio-proxy.log.pos</span>
+<span class="line">      tag istio-proxy</span>
+<span class="line">      format json</span>
+<span class="line">    &lt;/source&gt;</span>
+<span class="line">    &lt;match istio-proxy&gt;</span>
+<span class="line">      @type elasticsearch</span>
+<span class="line">      host elasticsearch</span>
+<span class="line">      port 9200</span>
+<span class="line">      index_name istio-proxy</span>
+<span class="line">    &lt;/match&gt;</span></span>
+<span class="line"></span></code></pre><div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0;"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="故障注入" tabindex="-1"><a class="header-anchor" href="#故障注入"><span>故障注入</span></a></h2><h3 id="_1-延迟注入" tabindex="-1"><a class="header-anchor" href="#_1-延迟注入"><span>1. 延迟注入</span></a></h3><div class="language-yaml line-numbers-mode" data-highlighter="prismjs" data-ext="yml"><pre><code class="language-yaml"><span class="line"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> networking.istio.io/v1alpha3</span>
+<span class="line"><span class="token key atrule">kind</span><span class="token punctuation">:</span> VirtualService</span>
+<span class="line"><span class="token key atrule">metadata</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">name</span><span class="token punctuation">:</span> my<span class="token punctuation">-</span>virtual<span class="token punctuation">-</span>service</span>
+<span class="line"><span class="token key atrule">spec</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">hosts</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token punctuation">-</span> myapp.example.com</span>
+<span class="line">  <span class="token key atrule">http</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token punctuation">-</span> <span class="token key atrule">fault</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token key atrule">delay</span><span class="token punctuation">:</span></span>
+<span class="line">          <span class="token key atrule">percentage</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token key atrule">value</span><span class="token punctuation">:</span> <span class="token number">50</span></span>
+<span class="line">          <span class="token key atrule">fixedDelay</span><span class="token punctuation">:</span> 5s</span>
+<span class="line">      <span class="token key atrule">route</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token punctuation">-</span> <span class="token key atrule">destination</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token key atrule">host</span><span class="token punctuation">:</span> my<span class="token punctuation">-</span>service</span>
+<span class="line">            <span class="token key atrule">port</span><span class="token punctuation">:</span></span>
+<span class="line">              <span class="token key atrule">number</span><span class="token punctuation">:</span> <span class="token number">80</span></span>
+<span class="line"></span></code></pre><div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0;"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_2-错误注入" tabindex="-1"><a class="header-anchor" href="#_2-错误注入"><span>2. 错误注入</span></a></h3><div class="language-yaml line-numbers-mode" data-highlighter="prismjs" data-ext="yml"><pre><code class="language-yaml"><span class="line"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> networking.istio.io/v1alpha3</span>
+<span class="line"><span class="token key atrule">kind</span><span class="token punctuation">:</span> VirtualService</span>
+<span class="line"><span class="token key atrule">metadata</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">name</span><span class="token punctuation">:</span> my<span class="token punctuation">-</span>virtual<span class="token punctuation">-</span>service</span>
+<span class="line"><span class="token key atrule">spec</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">hosts</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token punctuation">-</span> myapp.example.com</span>
+<span class="line">  <span class="token key atrule">http</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token punctuation">-</span> <span class="token key atrule">fault</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token key atrule">abort</span><span class="token punctuation">:</span></span>
+<span class="line">          <span class="token key atrule">percentage</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token key atrule">value</span><span class="token punctuation">:</span> <span class="token number">10</span></span>
+<span class="line">          <span class="token key atrule">httpStatus</span><span class="token punctuation">:</span> <span class="token number">500</span></span>
+<span class="line">      <span class="token key atrule">route</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token punctuation">-</span> <span class="token key atrule">destination</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token key atrule">host</span><span class="token punctuation">:</span> my<span class="token punctuation">-</span>service</span>
+<span class="line">            <span class="token key atrule">port</span><span class="token punctuation">:</span></span>
+<span class="line">              <span class="token key atrule">number</span><span class="token punctuation">:</span> <span class="token number">80</span></span>
+<span class="line"></span></code></pre><div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0;"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="常用命令" tabindex="-1"><a class="header-anchor" href="#常用命令"><span>常用命令</span></a></h2><h3 id="查看-service-mesh-状态" tabindex="-1"><a class="header-anchor" href="#查看-service-mesh-状态"><span>查看 Service Mesh 状态</span></a></h3><div class="language-bash line-numbers-mode" data-highlighter="prismjs" data-ext="sh"><pre><code class="language-bash"><span class="line"><span class="token comment"># 查看 Istio 组件</span></span>
+<span class="line">kubectl get pods <span class="token parameter variable">-n</span> istio-system</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 查看 VirtualService</span></span>
+<span class="line">kubectl get virtualservices</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 查看 DestinationRule</span></span>
+<span class="line">kubectl get destinationrules</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 查看 Gateway</span></span>
+<span class="line">kubectl get gateways</span>
+<span class="line"></span></code></pre><div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0;"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="调试-service-mesh" tabindex="-1"><a class="header-anchor" href="#调试-service-mesh"><span>调试 Service Mesh</span></a></h3><div class="language-bash line-numbers-mode" data-highlighter="prismjs" data-ext="sh"><pre><code class="language-bash"><span class="line"><span class="token comment"># 查看 sidecar 配置</span></span>
+<span class="line">istioctl proxy-config cluster my-pod</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 查看路由配置</span></span>
+<span class="line">istioctl proxy-config route my-pod</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 查看监听器配置</span></span>
+<span class="line">istioctl proxy-config listener my-pod</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 查看端点配置</span></span>
+<span class="line">istioctl proxy-config endpoint my-pod</span>
+<span class="line"></span></code></pre><div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0;"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="测试-service-mesh" tabindex="-1"><a class="header-anchor" href="#测试-service-mesh"><span>测试 Service Mesh</span></a></h3><div class="language-bash line-numbers-mode" data-highlighter="prismjs" data-ext="sh"><pre><code class="language-bash"><span class="line"><span class="token comment"># 测试服务连接</span></span>
+<span class="line">kubectl <span class="token builtin class-name">exec</span> <span class="token parameter variable">-it</span> my-pod -- <span class="token function">curl</span> my-service:80</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 查看访问日志</span></span>
+<span class="line">kubectl logs <span class="token parameter variable">-l</span> <span class="token assign-left variable">app</span><span class="token operator">=</span>my-app <span class="token parameter variable">-c</span> istio-proxy</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 查看指标</span></span>
+<span class="line">kubectl <span class="token builtin class-name">exec</span> <span class="token parameter variable">-it</span> my-pod -- <span class="token function">curl</span> localhost:15000/stats</span>
+<span class="line"></span></code></pre><div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0;"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="最佳实践" tabindex="-1"><a class="header-anchor" href="#最佳实践"><span>最佳实践</span></a></h2><ol><li><strong>渐进式部署</strong>：逐步启用 Service Mesh 功能</li><li><strong>监控告警</strong>：建立完善的监控体系</li><li><strong>安全配置</strong>：实施适当的安全策略</li><li><strong>性能优化</strong>：优化 Service Mesh 性能</li><li><strong>故障排除</strong>：建立故障排除流程</li><li><strong>文档管理</strong>：维护 Service Mesh 配置文档</li><li><strong>团队培训</strong>：培训团队使用 Service Mesh</li></ol></div><!--[--><!--]--></div><footer class="vp-page-meta"><!----><div class="vp-meta-item git-info"><div class="vp-meta-item last-updated"><span class="meta-item-label">最近更新: </span><time class="meta-item-info" datetime="2025-09-19T08:04:53.000Z" data-allow-mismatch>2025/9/19 08:04</time></div><div class="vp-meta-item contributors"><span class="meta-item-label">Contributors: </span><span class="meta-item-info"><!--[--><!--[--><span class="contributor" title="email: lzb100562@163.com">loopbin</span><!----><!--]--><!--]--></span></div></div></footer><!----><!--[--><!--]--></main><!--]--></div><!--[--><!----><!--]--><!--]--></div>
+    <script src="/logbook/assets/js/runtime~app.8c870cb4.js" defer></script><script src="/logbook/assets/js/9173.807ef4b6.js" defer></script><script src="/logbook/assets/js/app.cb7e2e6a.js" defer></script>
+  </body>
+</html>

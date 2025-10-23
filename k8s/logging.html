@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="generator" content="VuePress 2.0.0-rc.26" />
+    <style>
+      :root {
+        --vp-c-bg: #fff;
+      }
+
+      [data-theme='dark'] {
+        --vp-c-bg: #1b1b1f;
+      }
+
+      html,
+      body {
+        background-color: var(--vp-c-bg);
+      }
+    </style>
+    <script>
+      const useChoice = localStorage.getItem('vuepress-color-scheme')
+      const systemStatus =
+        'matchMedia' in window
+          ? window.matchMedia('(prefers-color-scheme: dark)').matches
+          : false
+
+      if (useChoice === 'light') {
+        document.documentElement.dataset.theme = 'light'
+      } else if (useChoice === 'dark' || systemStatus) {
+        document.documentElement.dataset.theme = 'dark'
+      }
+    </script>
+    <title>Kubernetes 日志管理详解 | 开发笔记</title><meta name="description" content="个人开发备忘和技术笔记">
+    <link rel="stylesheet" href="/logbook/assets/css/styles.f2ab0c8f.css">
+    <link rel="preload" href="/logbook/assets/js/runtime~app.8c870cb4.js" as="script"><link rel="preload" href="/logbook/assets/css/styles.f2ab0c8f.css" as="style"><link rel="preload" href="/logbook/assets/js/9173.807ef4b6.js" as="script"><link rel="preload" href="/logbook/assets/js/app.cb7e2e6a.js" as="script">
+    <link rel="prefetch" href="/logbook/assets/js/micro_fe_implementation-principles.html.f1701e25.js" as="script"><link rel="prefetch" href="/logbook/assets/js/workspaces_micro-frontends.html.1f8b663a.js" as="script"><link rel="prefetch" href="/logbook/assets/js/trading_risk-management_position-sizing.html.cfa6b4e8.js" as="script"><link rel="prefetch" href="/logbook/assets/js/trading_strategies_short-term.html.a2b7b93b.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_data-structures_tree.html.7f64ae4c.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_techniques_greedy.html.b1f30c61.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_data-structures_stack-queue.html.ab995c37.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_data-structures_graph.html.192ecae2.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_data-structures_linked-list.html.c1fbebbb.js" as="script"><link rel="prefetch" href="/logbook/assets/js/cache_cache-troubleshooting.html.3a775d52.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_techniques_backtracking.html.a11846fa.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_techniques_dynamic-programming.html.84d74678.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_techniques_divide-conquer.html.0e1be532.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_data-structures_heap.html.13fe08e2.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_analysis_complexity.html.473093a3.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_service.html.572a007b.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_data-structures_array.html.4d353edd.js" as="script"><link rel="prefetch" href="/logbook/assets/js/trading_technical-analysis_basics.html.0e9eef42.js" as="script"><link rel="prefetch" href="/logbook/assets/js/cache_cache-strategies.html.38d90412.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_sorting_heap-sort.html.32624c73.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_secret.html.104a69cf.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_security.html.73c3b513.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_statefulset.html.ab3599c5.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_analysis_optimization.html.11b6bc1b.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_monitoring.html.9973a720.js" as="script"><link rel="prefetch" href="/logbook/assets/js/docker_cicd.html.1a4388cb.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_networking.html.db322fae.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_ingress.html.e625416d.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_logging.html.6dca0683.js" as="script"><link rel="prefetch" href="/logbook/assets/js/docker_compose.html.3c4fe746.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_storage.html.13a97437.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_daemonset.html.a2f77067.js" as="script"><link rel="prefetch" href="/logbook/assets/js/docker_performance.html.484a2d09.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_service-mesh.html.8faecc0d.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_sorting_merge-sort.html.3da4e41e.js" as="script"><link rel="prefetch" href="/logbook/assets/js/micro_fe_implementation-solutions.html.e58c5cb6.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_configmap.html.838b33e0.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_basics.html.df083b75.js" as="script"><link rel="prefetch" href="/logbook/assets/js/workspaces_monorepo.html.eacc46c7.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_sorting_quick-sort.html.db30f46b.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_rbac.html.0ecf936e.js" as="script"><link rel="prefetch" href="/logbook/assets/js/workspaces_index.html.e42e8ebd.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_sorting_counting-sort.html.2fdb775f.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_storage-class.html.acedca07.js" as="script"><link rel="prefetch" href="/logbook/assets/js/docker_monitoring.html.7349fbc4.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_certificates.html.6ad78048.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_job-cronjob.html.6571f04f.js" as="script"><link rel="prefetch" href="/logbook/assets/js/docker_troubleshooting.html.48c7bf58.js" as="script"><link rel="prefetch" href="/logbook/assets/js/micro_fe_sandbox.html.e7a747a7.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_sorting_insertion-sort.html.7f2672dc.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_deployment.html.bf300d35.js" as="script"><link rel="prefetch" href="/logbook/assets/js/docker_security.html.c5174331.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_searching_binary-search.html.bcd823d0.js" as="script"><link rel="prefetch" href="/logbook/assets/js/docker_volumes.html.fecbc9c2.js" as="script"><link rel="prefetch" href="/logbook/assets/js/docker_docker_file.html.0c06ee7a.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_sorting_selection-sort.html.c1d40fb8.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_searching_linear-search.html.83bc88bd.js" as="script"><link rel="prefetch" href="/logbook/assets/js/docker_basics.html.de397476.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_sorting_bubble-sort.html.c27f3d85.js" as="script"><link rel="prefetch" href="/logbook/assets/js/cache_cache-types.html.8f3758c6.js" as="script"><link rel="prefetch" href="/logbook/assets/js/docker_networking.html.f55af662.js" as="script"><link rel="prefetch" href="/logbook/assets/js/k8s_index.html.2621bfc8.js" as="script"><link rel="prefetch" href="/logbook/assets/js/docker_common-operations.html.58c46e5f.js" as="script"><link rel="prefetch" href="/logbook/assets/js/ci_devops.html.e00cca10.js" as="script"><link rel="prefetch" href="/logbook/assets/js/ci_index.html.3a9f8563.js" as="script"><link rel="prefetch" href="/logbook/assets/js/react_state.html.959b42e0.js" as="script"><link rel="prefetch" href="/logbook/assets/js/mongoose_operations.html.7b1e764d.js" as="script"><link rel="prefetch" href="/logbook/assets/js/mongoose_schema-model.html.67359042.js" as="script"><link rel="prefetch" href="/logbook/assets/js/docker_learning-path.html.9ac54458.js" as="script"><link rel="prefetch" href="/logbook/assets/js/trading_index.html.ae3a7c92.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_index.html.3a61f74f.js" as="script"><link rel="prefetch" href="/logbook/assets/js/mongoose_install.html.e6119034.js" as="script"><link rel="prefetch" href="/logbook/assets/js/mongoose_plugins.html.e71c18d0.js" as="script"><link rel="prefetch" href="/logbook/assets/js/cache_index.html.7aebda4f.js" as="script"><link rel="prefetch" href="/logbook/assets/js/docker_index.html.3478e8ae.js" as="script"><link rel="prefetch" href="/logbook/assets/js/https_index.html.83c7ee7c.js" as="script"><link rel="prefetch" href="/logbook/assets/js/mongoose_middleware.html.ee8cad56.js" as="script"><link rel="prefetch" href="/logbook/assets/js/mongoose_index.html.53f6fcbf.js" as="script"><link rel="prefetch" href="/logbook/assets/js/webrtc_index.html.81fb68fa.js" as="script"><link rel="prefetch" href="/logbook/assets/js/workspaces_qa.html.b6aaad88.js" as="script"><link rel="prefetch" href="/logbook/assets/js/mongoose_faq.html.bdf70966.js" as="script"><link rel="prefetch" href="/logbook/assets/js/notes.html.27c33920.js" as="script"><link rel="prefetch" href="/logbook/assets/js/index.html.3efd9740.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_data-structures_hash-table.html.168f5230.js" as="script"><link rel="prefetch" href="/logbook/assets/js/algorithm_searching_hash-search.html.08e0a50c.js" as="script"><link rel="prefetch" href="/logbook/assets/js/404.html.d909ee5a.js" as="script">
+  </head>
+  <body>
+    <div id="app"><!--[--><div class="vp-theme-container no-sidebar external-link-icon" vp-container><!--[--><header class="vp-navbar" vp-navbar><div class="vp-toggle-sidebar-button" title="toggle sidebar" aria-expanded="false" role="button" tabindex="0"><div class="icon" aria-hidden="true"><span></span><span></span><span></span></div></div><span><a class="route-link" href="/logbook/"><img class="vp-site-logo" src="https://vuejs.press/images/hero.png" alt="开发笔记"><span class="vp-site-name vp-hide-mobile" aria-hidden="true">开发笔记</span></a></span><div class="vp-navbar-items-wrapper" style=""><!--[--><!--]--><nav class="vp-navbar-items vp-hide-mobile" aria-label="site navigation"><!--[--><div class="vp-navbar-item"><a class="route-link auto-link" href="/logbook/" aria-label="首页"><!--[--><!--[--><!--]--><!--]-->首页<!--[--><!--[--><!--]--><!--]--></a></div><div class="vp-navbar-item"><a class="route-link auto-link" href="/logbook/webrtc.html" aria-label="WebRTC"><!--[--><!--[--><!--]--><!--]-->WebRTC<!--[--><!--[--><!--]--><!--]--></a></div><div class="vp-navbar-item"><a class="route-link auto-link" href="/logbook/docker/" aria-label="Docker"><!--[--><!--[--><!--]--><!--]-->Docker<!--[--><!--[--><!--]--><!--]--></a></div><div class="vp-navbar-item"><a class="route-link auto-link" href="/logbook/ci/" aria-label="ci"><!--[--><!--[--><!--]--><!--]-->ci<!--[--><!--[--><!--]--><!--]--></a></div><div class="vp-navbar-item"><a class="route-link auto-link" href="/logbook/algorithm/" aria-label="algorithm"><!--[--><!--[--><!--]--><!--]-->algorithm<!--[--><!--[--><!--]--><!--]--></a></div><!--]--></nav><!--[--><!--]--><button type="button" class="vp-toggle-color-mode-button" title="toggle color mode"><svg class="light-icon" viewbox="0 0 32 32" style=""><path d="M16 12.005a4 4 0 1 1-4 4a4.005 4.005 0 0 1 4-4m0-2a6 6 0 1 0 6 6a6 6 0 0 0-6-6z" fill="currentColor"></path><path d="M5.394 6.813l1.414-1.415l3.506 3.506L8.9 10.318z" fill="currentColor"></path><path d="M2 15.005h5v2H2z" fill="currentColor"></path><path d="M5.394 25.197L8.9 21.691l1.414 1.415l-3.506 3.505z" fill="currentColor"></path><path d="M15 25.005h2v5h-2z" fill="currentColor"></path><path d="M21.687 23.106l1.414-1.415l3.506 3.506l-1.414 1.414z" fill="currentColor"></path><path d="M25 15.005h5v2h-5z" fill="currentColor"></path><path d="M21.687 8.904l3.506-3.506l1.414 1.415l-3.506 3.505z" fill="currentColor"></path><path d="M15 2.005h2v5h-2z" fill="currentColor"></path></svg><svg class="dark-icon" viewbox="0 0 32 32" style="display:none;"><path d="M13.502 5.414a15.075 15.075 0 0 0 11.594 18.194a11.113 11.113 0 0 1-7.975 3.39c-.138 0-.278.005-.418 0a11.094 11.094 0 0 1-3.2-21.584M14.98 3a1.002 1.002 0 0 0-.175.016a13.096 13.096 0 0 0 1.825 25.981c.164.006.328 0 .49 0a13.072 13.072 0 0 0 10.703-5.555a1.01 1.01 0 0 0-.783-1.565A13.08 13.08 0 0 1 15.89 4.38A1.015 1.015 0 0 0 14.98 3z" fill="currentColor"></path></svg></button><!----></div></header><!--]--><div class="vp-sidebar-mask"></div><!--[--><aside class="vp-sidebar" vp-sidebar><nav class="vp-navbar-items" aria-label="site navigation"><!--[--><div class="vp-navbar-item"><a class="route-link auto-link" href="/logbook/" aria-label="首页"><!--[--><!--[--><!--]--><!--]-->首页<!--[--><!--[--><!--]--><!--]--></a></div><div class="vp-navbar-item"><a class="route-link auto-link" href="/logbook/webrtc.html" aria-label="WebRTC"><!--[--><!--[--><!--]--><!--]-->WebRTC<!--[--><!--[--><!--]--><!--]--></a></div><div class="vp-navbar-item"><a class="route-link auto-link" href="/logbook/docker/" aria-label="Docker"><!--[--><!--[--><!--]--><!--]-->Docker<!--[--><!--[--><!--]--><!--]--></a></div><div class="vp-navbar-item"><a class="route-link auto-link" href="/logbook/ci/" aria-label="ci"><!--[--><!--[--><!--]--><!--]-->ci<!--[--><!--[--><!--]--><!--]--></a></div><div class="vp-navbar-item"><a class="route-link auto-link" href="/logbook/algorithm/" aria-label="algorithm"><!--[--><!--[--><!--]--><!--]-->algorithm<!--[--><!--[--><!--]--><!--]--></a></div><!--]--></nav><!--[--><!--]--><!----><!--[--><!--]--></aside><!--]--><!--[--><main class="vp-page"><!--[--><!--]--><div vp-content><!--[--><!--]--><div id="content"><h1 id="kubernetes-日志管理详解" tabindex="-1"><a class="header-anchor" href="#kubernetes-日志管理详解"><span>Kubernetes 日志管理详解</span></a></h1><h2 id="概述" tabindex="-1"><a class="header-anchor" href="#概述"><span>概述</span></a></h2><p>Kubernetes 日志管理提供了集中化日志收集、存储、分析和可视化功能，帮助运维人员快速定位和解决问题。</p><h2 id="日志架构" tabindex="-1"><a class="header-anchor" href="#日志架构"><span>日志架构</span></a></h2><h3 id="_1-日志收集组件" tabindex="-1"><a class="header-anchor" href="#_1-日志收集组件"><span>1. 日志收集组件</span></a></h3><ul><li><strong>Fluentd</strong>：日志收集和转发</li><li><strong>Fluent Bit</strong>：轻量级日志收集</li><li><strong>Filebeat</strong>：文件日志收集</li><li><strong>Logstash</strong>：日志处理和转换</li></ul><h3 id="_2-日志存储组件" tabindex="-1"><a class="header-anchor" href="#_2-日志存储组件"><span>2. 日志存储组件</span></a></h3><ul><li><strong>Elasticsearch</strong>：日志存储和搜索</li><li><strong>Loki</strong>：轻量级日志聚合</li><li><strong>ClickHouse</strong>：高性能日志存储</li></ul><h2 id="fluentd-配置" tabindex="-1"><a class="header-anchor" href="#fluentd-配置"><span>Fluentd 配置</span></a></h2><h3 id="_1-fluentd-部署" tabindex="-1"><a class="header-anchor" href="#_1-fluentd-部署"><span>1. Fluentd 部署</span></a></h3><div class="language-yaml line-numbers-mode" data-highlighter="prismjs" data-ext="yml"><pre><code class="language-yaml"><span class="line"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1</span>
+<span class="line"><span class="token key atrule">kind</span><span class="token punctuation">:</span> ConfigMap</span>
+<span class="line"><span class="token key atrule">metadata</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">name</span><span class="token punctuation">:</span> fluentd<span class="token punctuation">-</span>config</span>
+<span class="line">  <span class="token key atrule">namespace</span><span class="token punctuation">:</span> logging</span>
+<span class="line"><span class="token key atrule">data</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">fluent.conf</span><span class="token punctuation">:</span> <span class="token punctuation">|</span><span class="token scalar string"></span>
+<span class="line">    &lt;source&gt;</span>
+<span class="line">      @type tail</span>
+<span class="line">      path /var/log/containers/*.log</span>
+<span class="line">      pos_file /var/log/fluentd-containers.log.pos</span>
+<span class="line">      tag kubernetes.*</span>
+<span class="line">      format json</span>
+<span class="line">      time_key time</span>
+<span class="line">      time_format %Y-%m-%dT%H:%M:%S.%NZ</span>
+<span class="line">    &lt;/source&gt;</span></span>
+<span class="line"></span>
+<span class="line">    &lt;filter kubernetes.<span class="token important">**&gt;</span></span>
+<span class="line">      @type kubernetes_metadata</span>
+<span class="line">    &lt;/filter<span class="token punctuation">&gt;</span></span>
+<span class="line"></span>
+<span class="line">    &lt;match kubernetes.<span class="token important">**&gt;</span></span>
+<span class="line">      @type elasticsearch</span>
+<span class="line">      host elasticsearch</span>
+<span class="line">      port 9200</span>
+<span class="line">      index_name kubernetes</span>
+<span class="line">      type_name _doc</span>
+<span class="line">    &lt;/match<span class="token punctuation">&gt;</span></span>
+<span class="line"><span class="token punctuation">---</span></span>
+<span class="line"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> apps/v1</span>
+<span class="line"><span class="token key atrule">kind</span><span class="token punctuation">:</span> DaemonSet</span>
+<span class="line"><span class="token key atrule">metadata</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">name</span><span class="token punctuation">:</span> fluentd</span>
+<span class="line">  <span class="token key atrule">namespace</span><span class="token punctuation">:</span> logging</span>
+<span class="line"><span class="token key atrule">spec</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">selector</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token key atrule">matchLabels</span><span class="token punctuation">:</span></span>
+<span class="line">      <span class="token key atrule">app</span><span class="token punctuation">:</span> fluentd</span>
+<span class="line">  <span class="token key atrule">template</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token key atrule">metadata</span><span class="token punctuation">:</span></span>
+<span class="line">      <span class="token key atrule">labels</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token key atrule">app</span><span class="token punctuation">:</span> fluentd</span>
+<span class="line">    <span class="token key atrule">spec</span><span class="token punctuation">:</span></span>
+<span class="line">      <span class="token key atrule">containers</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> fluentd</span>
+<span class="line">          <span class="token key atrule">image</span><span class="token punctuation">:</span> fluent/fluentd<span class="token punctuation">-</span>kubernetes<span class="token punctuation">-</span>daemonset<span class="token punctuation">:</span>v1<span class="token punctuation">-</span>debian<span class="token punctuation">-</span>elasticsearch</span>
+<span class="line">          <span class="token key atrule">env</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> FLUENT_ELASTICSEARCH_HOST</span>
+<span class="line">              <span class="token key atrule">value</span><span class="token punctuation">:</span> <span class="token string">&quot;elasticsearch&quot;</span></span>
+<span class="line">            <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> FLUENT_ELASTICSEARCH_PORT</span>
+<span class="line">              <span class="token key atrule">value</span><span class="token punctuation">:</span> <span class="token string">&quot;9200&quot;</span></span>
+<span class="line">            <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> FLUENT_ELASTICSEARCH_SCHEME</span>
+<span class="line">              <span class="token key atrule">value</span><span class="token punctuation">:</span> <span class="token string">&quot;http&quot;</span></span>
+<span class="line">          <span class="token key atrule">volumeMounts</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> varlog</span>
+<span class="line">              <span class="token key atrule">mountPath</span><span class="token punctuation">:</span> /var/log</span>
+<span class="line">            <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> varlibdockercontainers</span>
+<span class="line">              <span class="token key atrule">mountPath</span><span class="token punctuation">:</span> /var/lib/docker/containers</span>
+<span class="line">              <span class="token key atrule">readOnly</span><span class="token punctuation">:</span> <span class="token boolean important">true</span></span>
+<span class="line">            <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> fluentd<span class="token punctuation">-</span>config</span>
+<span class="line">              <span class="token key atrule">mountPath</span><span class="token punctuation">:</span> /fluentd/etc</span>
+<span class="line">      <span class="token key atrule">volumes</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> varlog</span>
+<span class="line">          <span class="token key atrule">hostPath</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token key atrule">path</span><span class="token punctuation">:</span> /var/log</span>
+<span class="line">        <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> varlibdockercontainers</span>
+<span class="line">          <span class="token key atrule">hostPath</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token key atrule">path</span><span class="token punctuation">:</span> /var/lib/docker/containers</span>
+<span class="line">        <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> fluentd<span class="token punctuation">-</span>config</span>
+<span class="line">          <span class="token key atrule">configMap</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token key atrule">name</span><span class="token punctuation">:</span> fluentd<span class="token punctuation">-</span>config</span>
+<span class="line"></span></code></pre><div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0;"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="elasticsearch-配置" tabindex="-1"><a class="header-anchor" href="#elasticsearch-配置"><span>Elasticsearch 配置</span></a></h2><h3 id="_1-elasticsearch-部署" tabindex="-1"><a class="header-anchor" href="#_1-elasticsearch-部署"><span>1. Elasticsearch 部署</span></a></h3><div class="language-yaml line-numbers-mode" data-highlighter="prismjs" data-ext="yml"><pre><code class="language-yaml"><span class="line"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> apps/v1</span>
+<span class="line"><span class="token key atrule">kind</span><span class="token punctuation">:</span> StatefulSet</span>
+<span class="line"><span class="token key atrule">metadata</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">name</span><span class="token punctuation">:</span> elasticsearch</span>
+<span class="line">  <span class="token key atrule">namespace</span><span class="token punctuation">:</span> logging</span>
+<span class="line"><span class="token key atrule">spec</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">serviceName</span><span class="token punctuation">:</span> elasticsearch</span>
+<span class="line">  <span class="token key atrule">replicas</span><span class="token punctuation">:</span> <span class="token number">3</span></span>
+<span class="line">  <span class="token key atrule">selector</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token key atrule">matchLabels</span><span class="token punctuation">:</span></span>
+<span class="line">      <span class="token key atrule">app</span><span class="token punctuation">:</span> elasticsearch</span>
+<span class="line">  <span class="token key atrule">template</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token key atrule">metadata</span><span class="token punctuation">:</span></span>
+<span class="line">      <span class="token key atrule">labels</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token key atrule">app</span><span class="token punctuation">:</span> elasticsearch</span>
+<span class="line">    <span class="token key atrule">spec</span><span class="token punctuation">:</span></span>
+<span class="line">      <span class="token key atrule">containers</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> elasticsearch</span>
+<span class="line">          <span class="token key atrule">image</span><span class="token punctuation">:</span> docker.elastic.co/elasticsearch/elasticsearch<span class="token punctuation">:</span>7.17.0</span>
+<span class="line">          <span class="token key atrule">ports</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token punctuation">-</span> <span class="token key atrule">containerPort</span><span class="token punctuation">:</span> <span class="token number">9200</span></span>
+<span class="line">            <span class="token punctuation">-</span> <span class="token key atrule">containerPort</span><span class="token punctuation">:</span> <span class="token number">9300</span></span>
+<span class="line">          <span class="token key atrule">env</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> cluster.name</span>
+<span class="line">              <span class="token key atrule">value</span><span class="token punctuation">:</span> <span class="token string">&quot;kubernetes-logs&quot;</span></span>
+<span class="line">            <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> node.name</span>
+<span class="line">              <span class="token key atrule">valueFrom</span><span class="token punctuation">:</span></span>
+<span class="line">                <span class="token key atrule">fieldRef</span><span class="token punctuation">:</span></span>
+<span class="line">                  <span class="token key atrule">fieldPath</span><span class="token punctuation">:</span> metadata.name</span>
+<span class="line">            <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> discovery.seed_hosts</span>
+<span class="line">              <span class="token key atrule">value</span><span class="token punctuation">:</span> <span class="token string">&quot;elasticsearch-0.elasticsearch,elasticsearch-1.elasticsearch,elasticsearch-2.elasticsearch&quot;</span></span>
+<span class="line">            <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> cluster.initial_master_nodes</span>
+<span class="line">              <span class="token key atrule">value</span><span class="token punctuation">:</span> <span class="token string">&quot;elasticsearch-0,elasticsearch-1,elasticsearch-2&quot;</span></span>
+<span class="line">            <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> ES_JAVA_OPTS</span>
+<span class="line">              <span class="token key atrule">value</span><span class="token punctuation">:</span> <span class="token string">&quot;-Xms512m -Xmx512m&quot;</span></span>
+<span class="line">          <span class="token key atrule">volumeMounts</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> elasticsearch<span class="token punctuation">-</span>storage</span>
+<span class="line">              <span class="token key atrule">mountPath</span><span class="token punctuation">:</span> /usr/share/elasticsearch/data</span>
+<span class="line">          <span class="token key atrule">resources</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token key atrule">requests</span><span class="token punctuation">:</span></span>
+<span class="line">              <span class="token key atrule">memory</span><span class="token punctuation">:</span> <span class="token string">&quot;1Gi&quot;</span></span>
+<span class="line">              <span class="token key atrule">cpu</span><span class="token punctuation">:</span> <span class="token string">&quot;500m&quot;</span></span>
+<span class="line">            <span class="token key atrule">limits</span><span class="token punctuation">:</span></span>
+<span class="line">              <span class="token key atrule">memory</span><span class="token punctuation">:</span> <span class="token string">&quot;2Gi&quot;</span></span>
+<span class="line">              <span class="token key atrule">cpu</span><span class="token punctuation">:</span> <span class="token string">&quot;1000m&quot;</span></span>
+<span class="line">  <span class="token key atrule">volumeClaimTemplates</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token punctuation">-</span> <span class="token key atrule">metadata</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token key atrule">name</span><span class="token punctuation">:</span> elasticsearch<span class="token punctuation">-</span>storage</span>
+<span class="line">      <span class="token key atrule">spec</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token key atrule">accessModes</span><span class="token punctuation">:</span></span>
+<span class="line">          <span class="token punctuation">-</span> ReadWriteOnce</span>
+<span class="line">        <span class="token key atrule">storageClassName</span><span class="token punctuation">:</span> fast<span class="token punctuation">-</span>ssd</span>
+<span class="line">        <span class="token key atrule">resources</span><span class="token punctuation">:</span></span>
+<span class="line">          <span class="token key atrule">requests</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token key atrule">storage</span><span class="token punctuation">:</span> 10Gi</span>
+<span class="line"></span></code></pre><div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0;"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_2-elasticsearch-服务" tabindex="-1"><a class="header-anchor" href="#_2-elasticsearch-服务"><span>2. Elasticsearch 服务</span></a></h3><div class="language-yaml line-numbers-mode" data-highlighter="prismjs" data-ext="yml"><pre><code class="language-yaml"><span class="line"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1</span>
+<span class="line"><span class="token key atrule">kind</span><span class="token punctuation">:</span> Service</span>
+<span class="line"><span class="token key atrule">metadata</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">name</span><span class="token punctuation">:</span> elasticsearch</span>
+<span class="line">  <span class="token key atrule">namespace</span><span class="token punctuation">:</span> logging</span>
+<span class="line"><span class="token key atrule">spec</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">selector</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token key atrule">app</span><span class="token punctuation">:</span> elasticsearch</span>
+<span class="line">  <span class="token key atrule">ports</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token punctuation">-</span> <span class="token key atrule">port</span><span class="token punctuation">:</span> <span class="token number">9200</span></span>
+<span class="line">      <span class="token key atrule">targetPort</span><span class="token punctuation">:</span> <span class="token number">9200</span></span>
+<span class="line">    <span class="token punctuation">-</span> <span class="token key atrule">port</span><span class="token punctuation">:</span> <span class="token number">9300</span></span>
+<span class="line">      <span class="token key atrule">targetPort</span><span class="token punctuation">:</span> <span class="token number">9300</span></span>
+<span class="line">  <span class="token key atrule">clusterIP</span><span class="token punctuation">:</span> None</span>
+<span class="line"></span></code></pre><div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0;"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="kibana-配置" tabindex="-1"><a class="header-anchor" href="#kibana-配置"><span>Kibana 配置</span></a></h2><h3 id="_1-kibana-部署" tabindex="-1"><a class="header-anchor" href="#_1-kibana-部署"><span>1. Kibana 部署</span></a></h3><div class="language-yaml line-numbers-mode" data-highlighter="prismjs" data-ext="yml"><pre><code class="language-yaml"><span class="line"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> apps/v1</span>
+<span class="line"><span class="token key atrule">kind</span><span class="token punctuation">:</span> Deployment</span>
+<span class="line"><span class="token key atrule">metadata</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">name</span><span class="token punctuation">:</span> kibana</span>
+<span class="line">  <span class="token key atrule">namespace</span><span class="token punctuation">:</span> logging</span>
+<span class="line"><span class="token key atrule">spec</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">replicas</span><span class="token punctuation">:</span> <span class="token number">1</span></span>
+<span class="line">  <span class="token key atrule">selector</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token key atrule">matchLabels</span><span class="token punctuation">:</span></span>
+<span class="line">      <span class="token key atrule">app</span><span class="token punctuation">:</span> kibana</span>
+<span class="line">  <span class="token key atrule">template</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token key atrule">metadata</span><span class="token punctuation">:</span></span>
+<span class="line">      <span class="token key atrule">labels</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token key atrule">app</span><span class="token punctuation">:</span> kibana</span>
+<span class="line">    <span class="token key atrule">spec</span><span class="token punctuation">:</span></span>
+<span class="line">      <span class="token key atrule">containers</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> kibana</span>
+<span class="line">          <span class="token key atrule">image</span><span class="token punctuation">:</span> docker.elastic.co/kibana/kibana<span class="token punctuation">:</span>7.17.0</span>
+<span class="line">          <span class="token key atrule">ports</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token punctuation">-</span> <span class="token key atrule">containerPort</span><span class="token punctuation">:</span> <span class="token number">5601</span></span>
+<span class="line">          <span class="token key atrule">env</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> ELASTICSEARCH_HOSTS</span>
+<span class="line">              <span class="token key atrule">value</span><span class="token punctuation">:</span> <span class="token string">&quot;http://elasticsearch:9200&quot;</span></span>
+<span class="line">          <span class="token key atrule">resources</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token key atrule">requests</span><span class="token punctuation">:</span></span>
+<span class="line">              <span class="token key atrule">memory</span><span class="token punctuation">:</span> <span class="token string">&quot;512Mi&quot;</span></span>
+<span class="line">              <span class="token key atrule">cpu</span><span class="token punctuation">:</span> <span class="token string">&quot;250m&quot;</span></span>
+<span class="line">            <span class="token key atrule">limits</span><span class="token punctuation">:</span></span>
+<span class="line">              <span class="token key atrule">memory</span><span class="token punctuation">:</span> <span class="token string">&quot;1Gi&quot;</span></span>
+<span class="line">              <span class="token key atrule">cpu</span><span class="token punctuation">:</span> <span class="token string">&quot;500m&quot;</span></span>
+<span class="line"><span class="token punctuation">---</span></span>
+<span class="line"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1</span>
+<span class="line"><span class="token key atrule">kind</span><span class="token punctuation">:</span> Service</span>
+<span class="line"><span class="token key atrule">metadata</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">name</span><span class="token punctuation">:</span> kibana</span>
+<span class="line">  <span class="token key atrule">namespace</span><span class="token punctuation">:</span> logging</span>
+<span class="line"><span class="token key atrule">spec</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">selector</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token key atrule">app</span><span class="token punctuation">:</span> kibana</span>
+<span class="line">  <span class="token key atrule">ports</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token punctuation">-</span> <span class="token key atrule">port</span><span class="token punctuation">:</span> <span class="token number">5601</span></span>
+<span class="line">      <span class="token key atrule">targetPort</span><span class="token punctuation">:</span> <span class="token number">5601</span></span>
+<span class="line">  <span class="token key atrule">type</span><span class="token punctuation">:</span> LoadBalancer</span>
+<span class="line"></span></code></pre><div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0;"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="应用日志配置" tabindex="-1"><a class="header-anchor" href="#应用日志配置"><span>应用日志配置</span></a></h2><h3 id="_1-结构化日志" tabindex="-1"><a class="header-anchor" href="#_1-结构化日志"><span>1. 结构化日志</span></a></h3><div class="language-yaml line-numbers-mode" data-highlighter="prismjs" data-ext="yml"><pre><code class="language-yaml"><span class="line"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> apps/v1</span>
+<span class="line"><span class="token key atrule">kind</span><span class="token punctuation">:</span> Deployment</span>
+<span class="line"><span class="token key atrule">metadata</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">name</span><span class="token punctuation">:</span> my<span class="token punctuation">-</span>app</span>
+<span class="line"><span class="token key atrule">spec</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">replicas</span><span class="token punctuation">:</span> <span class="token number">3</span></span>
+<span class="line">  <span class="token key atrule">selector</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token key atrule">matchLabels</span><span class="token punctuation">:</span></span>
+<span class="line">      <span class="token key atrule">app</span><span class="token punctuation">:</span> my<span class="token punctuation">-</span>app</span>
+<span class="line">  <span class="token key atrule">template</span><span class="token punctuation">:</span></span>
+<span class="line">    <span class="token key atrule">metadata</span><span class="token punctuation">:</span></span>
+<span class="line">      <span class="token key atrule">labels</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token key atrule">app</span><span class="token punctuation">:</span> my<span class="token punctuation">-</span>app</span>
+<span class="line">    <span class="token key atrule">spec</span><span class="token punctuation">:</span></span>
+<span class="line">      <span class="token key atrule">containers</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> my<span class="token punctuation">-</span>app</span>
+<span class="line">          <span class="token key atrule">image</span><span class="token punctuation">:</span> my<span class="token punctuation">-</span>app<span class="token punctuation">:</span>latest</span>
+<span class="line">          <span class="token key atrule">ports</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token punctuation">-</span> <span class="token key atrule">containerPort</span><span class="token punctuation">:</span> <span class="token number">8080</span></span>
+<span class="line">          <span class="token key atrule">env</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> LOG_LEVEL</span>
+<span class="line">              <span class="token key atrule">value</span><span class="token punctuation">:</span> <span class="token string">&quot;info&quot;</span></span>
+<span class="line">            <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> LOG_FORMAT</span>
+<span class="line">              <span class="token key atrule">value</span><span class="token punctuation">:</span> <span class="token string">&quot;json&quot;</span></span>
+<span class="line">          <span class="token key atrule">volumeMounts</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> log<span class="token punctuation">-</span>config</span>
+<span class="line">              <span class="token key atrule">mountPath</span><span class="token punctuation">:</span> /app/config</span>
+<span class="line">      <span class="token key atrule">volumes</span><span class="token punctuation">:</span></span>
+<span class="line">        <span class="token punctuation">-</span> <span class="token key atrule">name</span><span class="token punctuation">:</span> log<span class="token punctuation">-</span>config</span>
+<span class="line">          <span class="token key atrule">configMap</span><span class="token punctuation">:</span></span>
+<span class="line">            <span class="token key atrule">name</span><span class="token punctuation">:</span> log<span class="token punctuation">-</span>config</span>
+<span class="line"></span></code></pre><div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0;"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_2-日志配置" tabindex="-1"><a class="header-anchor" href="#_2-日志配置"><span>2. 日志配置</span></a></h3><div class="language-yaml line-numbers-mode" data-highlighter="prismjs" data-ext="yml"><pre><code class="language-yaml"><span class="line"><span class="token key atrule">apiVersion</span><span class="token punctuation">:</span> v1</span>
+<span class="line"><span class="token key atrule">kind</span><span class="token punctuation">:</span> ConfigMap</span>
+<span class="line"><span class="token key atrule">metadata</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">name</span><span class="token punctuation">:</span> log<span class="token punctuation">-</span>config</span>
+<span class="line"><span class="token key atrule">data</span><span class="token punctuation">:</span></span>
+<span class="line">  <span class="token key atrule">logback.xml</span><span class="token punctuation">:</span> <span class="token punctuation">|</span><span class="token scalar string"></span>
+<span class="line">    &lt;configuration&gt;</span>
+<span class="line">      &lt;appender name=&quot;STDOUT&quot; class=&quot;ch.qos.logback.core.ConsoleAppender&quot;&gt;</span>
+<span class="line">        &lt;encoder class=&quot;net.logstash.logback.encoder.LogstashEncoder&quot;&gt;</span>
+<span class="line">          &lt;includeContext&gt;true&lt;/includeContext&gt;</span>
+<span class="line">          &lt;includeMdc&gt;true&lt;/includeMdc&gt;</span>
+<span class="line">          &lt;customFields&gt;{&quot;service&quot;:&quot;my-app&quot;,&quot;version&quot;:&quot;1.0.0&quot;}&lt;/customFields&gt;</span>
+<span class="line">        &lt;/encoder&gt;</span>
+<span class="line">      &lt;/appender&gt;</span>
+<span class="line">      &lt;root level=&quot;INFO&quot;&gt;</span>
+<span class="line">        &lt;appender-ref ref=&quot;STDOUT&quot; /&gt;</span>
+<span class="line">      &lt;/root&gt;</span>
+<span class="line">    &lt;/configuration&gt;</span></span>
+<span class="line"></span></code></pre><div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0;"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="日志分析" tabindex="-1"><a class="header-anchor" href="#日志分析"><span>日志分析</span></a></h2><h3 id="_1-日志查询" tabindex="-1"><a class="header-anchor" href="#_1-日志查询"><span>1. 日志查询</span></a></h3><div class="language-bash line-numbers-mode" data-highlighter="prismjs" data-ext="sh"><pre><code class="language-bash"><span class="line"><span class="token comment"># 查看所有日志</span></span>
+<span class="line">kubectl logs <span class="token parameter variable">-l</span> <span class="token assign-left variable">app</span><span class="token operator">=</span>my-app</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 查看特定 Pod 日志</span></span>
+<span class="line">kubectl logs my-pod</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 查看日志并跟随</span></span>
+<span class="line">kubectl logs <span class="token parameter variable">-f</span> my-pod</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 查看最近的日志</span></span>
+<span class="line">kubectl logs <span class="token parameter variable">--tail</span><span class="token operator">=</span><span class="token number">100</span> my-pod</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 查看指定时间范围的日志</span></span>
+<span class="line">kubectl logs <span class="token parameter variable">--since</span><span class="token operator">=</span>1h my-pod</span>
+<span class="line"></span></code></pre><div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0;"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="_2-日志过滤" tabindex="-1"><a class="header-anchor" href="#_2-日志过滤"><span>2. 日志过滤</span></a></h3><div class="language-bash line-numbers-mode" data-highlighter="prismjs" data-ext="sh"><pre><code class="language-bash"><span class="line"><span class="token comment"># 过滤错误日志</span></span>
+<span class="line">kubectl logs my-pod <span class="token operator">|</span> <span class="token function">grep</span> ERROR</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 过滤特定时间</span></span>
+<span class="line">kubectl logs <span class="token parameter variable">--since</span><span class="token operator">=</span><span class="token number">2023</span>-01-01T00:00:00Z my-pod</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 过滤特定容器</span></span>
+<span class="line">kubectl logs <span class="token parameter variable">-c</span> my-container my-pod</span>
+<span class="line"></span></code></pre><div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0;"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="常用命令" tabindex="-1"><a class="header-anchor" href="#常用命令"><span>常用命令</span></a></h2><h3 id="查看日志状态" tabindex="-1"><a class="header-anchor" href="#查看日志状态"><span>查看日志状态</span></a></h3><div class="language-bash line-numbers-mode" data-highlighter="prismjs" data-ext="sh"><pre><code class="language-bash"><span class="line"><span class="token comment"># 查看 Fluentd Pod</span></span>
+<span class="line">kubectl get pods <span class="token parameter variable">-n</span> logging <span class="token parameter variable">-l</span> <span class="token assign-left variable">app</span><span class="token operator">=</span>fluentd</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 查看 Elasticsearch Pod</span></span>
+<span class="line">kubectl get pods <span class="token parameter variable">-n</span> logging <span class="token parameter variable">-l</span> <span class="token assign-left variable">app</span><span class="token operator">=</span>elasticsearch</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 查看 Kibana Pod</span></span>
+<span class="line">kubectl get pods <span class="token parameter variable">-n</span> logging <span class="token parameter variable">-l</span> <span class="token assign-left variable">app</span><span class="token operator">=</span>kibana</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 查看日志服务</span></span>
+<span class="line">kubectl get services <span class="token parameter variable">-n</span> logging</span>
+<span class="line"></span></code></pre><div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0;"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="访问日志界面" tabindex="-1"><a class="header-anchor" href="#访问日志界面"><span>访问日志界面</span></a></h3><div class="language-bash line-numbers-mode" data-highlighter="prismjs" data-ext="sh"><pre><code class="language-bash"><span class="line"><span class="token comment"># 端口转发到 Kibana</span></span>
+<span class="line">kubectl port-forward <span class="token parameter variable">-n</span> logging svc/kibana <span class="token number">5601</span>:5601</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 端口转发到 Elasticsearch</span></span>
+<span class="line">kubectl port-forward <span class="token parameter variable">-n</span> logging svc/elasticsearch <span class="token number">9200</span>:9200</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 访问 Kibana</span></span>
+<span class="line"><span class="token function">open</span> http://localhost:5601</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 访问 Elasticsearch</span></span>
+<span class="line"><span class="token function">open</span> http://localhost:9200</span>
+<span class="line"></span></code></pre><div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0;"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h3 id="调试日志" tabindex="-1"><a class="header-anchor" href="#调试日志"><span>调试日志</span></a></h3><div class="language-bash line-numbers-mode" data-highlighter="prismjs" data-ext="sh"><pre><code class="language-bash"><span class="line"><span class="token comment"># 查看 Fluentd 日志</span></span>
+<span class="line">kubectl logs <span class="token parameter variable">-n</span> logging <span class="token parameter variable">-l</span> <span class="token assign-left variable">app</span><span class="token operator">=</span>fluentd</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 查看 Elasticsearch 日志</span></span>
+<span class="line">kubectl logs <span class="token parameter variable">-n</span> logging <span class="token parameter variable">-l</span> <span class="token assign-left variable">app</span><span class="token operator">=</span>elasticsearch</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 查看 Kibana 日志</span></span>
+<span class="line">kubectl logs <span class="token parameter variable">-n</span> logging <span class="token parameter variable">-l</span> <span class="token assign-left variable">app</span><span class="token operator">=</span>kibana</span>
+<span class="line"></span>
+<span class="line"><span class="token comment"># 测试日志收集</span></span>
+<span class="line">kubectl <span class="token builtin class-name">exec</span> <span class="token parameter variable">-it</span> my-pod -- <span class="token builtin class-name">echo</span> <span class="token string">&quot;Test log message&quot;</span></span>
+<span class="line"></span></code></pre><div class="line-numbers" aria-hidden="true" style="counter-reset:line-number 0;"><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div><div class="line-number"></div></div></div><h2 id="最佳实践" tabindex="-1"><a class="header-anchor" href="#最佳实践"><span>最佳实践</span></a></h2><ol><li><strong>日志格式</strong>：使用结构化日志格式</li><li><strong>日志级别</strong>：合理设置日志级别</li><li><strong>日志轮转</strong>：配置日志轮转策略</li><li><strong>存储管理</strong>：合理配置日志存储</li><li><strong>监控告警</strong>：监控日志收集状态</li><li><strong>安全配置</strong>：保护敏感日志信息</li><li><strong>性能优化</strong>：优化日志收集性能</li></ol></div><!--[--><!--]--></div><footer class="vp-page-meta"><!----><div class="vp-meta-item git-info"><div class="vp-meta-item last-updated"><span class="meta-item-label">最近更新: </span><time class="meta-item-info" datetime="2025-09-19T08:04:53.000Z" data-allow-mismatch>2025/9/19 08:04</time></div><div class="vp-meta-item contributors"><span class="meta-item-label">Contributors: </span><span class="meta-item-info"><!--[--><!--[--><span class="contributor" title="email: lzb100562@163.com">loopbin</span><!----><!--]--><!--]--></span></div></div></footer><!----><!--[--><!--]--></main><!--]--></div><!--[--><!----><!--]--><!--]--></div>
+    <script src="/logbook/assets/js/runtime~app.8c870cb4.js" defer></script><script src="/logbook/assets/js/9173.807ef4b6.js" defer></script><script src="/logbook/assets/js/app.cb7e2e6a.js" defer></script>
+  </body>
+</html>
