@@ -30,7 +30,7 @@ Kubernetes 是一个容器编排平台，提供了容器化应用程序的自动
 
 - **作用**：控制器管理器
 - **功能**：运行各种控制器，维护集群状态
-- **包含**：Node Controller、Replication Controller 等
+- **包含**：Node Controller、**Replication** Controller 等
 
 ### 工作节点 (Worker Nodes)
 
